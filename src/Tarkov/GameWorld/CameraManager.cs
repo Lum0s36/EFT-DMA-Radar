@@ -61,7 +61,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld
 
                 for (int i = 0; i < 100; i++)
                 {
-                    var camera = Memory.ReadPtr(cameraManager + (ulong)i * 0x10, false);
+                    var camera = Memory.ReadPtr(cameraManager + (ulong)i * 0x8, false);
                     if (camera == 0)
                         continue;
 
