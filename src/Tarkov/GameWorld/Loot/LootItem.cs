@@ -42,15 +42,17 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
     {
         private static EftDmaConfig Config { get; } = App.Config;
         private readonly TarkovMarketItem _item;
+        private readonly bool _isQuestItem;
 
-        public LootItem(TarkovMarketItem item, Vector3 position)
+        public LootItem(TarkovMarketItem item, Vector3 position, bool isQuestItem = false)
         {
             ArgumentNullException.ThrowIfNull(item, nameof(item));
             _item = item;
             _position = position;
+            _isQuestItem = isQuestItem;
         }
 
-        public LootItem(string id, string name, Vector3 position)
+        public LootItem(string id, string name, Vector3 position, bool isQuestItem = false)
         {
             ArgumentNullException.ThrowIfNull(id, nameof(id));
             ArgumentNullException.ThrowIfNull(name, nameof(name));
@@ -63,6 +65,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
                 BsgId = id
             };
             _position = position;
+            _isQuestItem = isQuestItem;
         }
 
         /// <summary>
@@ -127,6 +130,11 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
         /// True if this item is wishlisted.
         /// </summary>
         public bool IsWishlisted => Config.Loot.ShowWishlist && LocalPlayer.WishlistItems.Contains(ID);
+
+        /// <summary>
+        /// True if this item is marked as a quest item by the game data.
+        /// </summary>
+        public bool IsQuestItem => _isQuestItem;
 
         /// <summary>
         /// True if the item is blacklisted via the UI.
@@ -240,6 +248,9 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
 
         public virtual void Draw(SKCanvas canvas, EftMapParams mapParams, LocalPlayer localPlayer)
         {
+            if (IsQuestItem && !App.Config.Loot.ShowQuestItems)
+                return;
+
             var label = GetUILabel();
             var paints = GetPaints();
             var heightDiff = Position.Y - localPlayer.Position.Y;
@@ -367,6 +378,8 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
 
         private ValueTuple<SKPaint, SKPaint> GetPaints()
         {
+            if (IsQuestItem)
+                return new(SKPaints.PaintQuestItem, SKPaints.TextQuestItem);
             if (IsWishlisted)
                 return new(SKPaints.PaintWishlistItem, SKPaints.TextWishlistItem);
             if (LootFilter.ShowBackpacks && IsBackpack)

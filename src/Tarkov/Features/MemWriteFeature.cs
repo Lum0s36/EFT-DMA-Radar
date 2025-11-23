@@ -69,7 +69,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 return;
             }
 
-            //Debug.WriteLine($"[{typeof(T).Name}] ApplyIfReady - calling TryApply");
+            //DebugLogger.LogDebug($"[{typeof(T).Name}] ApplyIfReady - calling TryApply");
             TryApply(localPlayer);
         }
     }

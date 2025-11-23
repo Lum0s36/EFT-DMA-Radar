@@ -53,7 +53,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                     if (stateChanged)
                     {
                         _lastEnabledState = false;
-                        //Debug.WriteLine("[InfiniteStamina] Disabled");
+                        //DebugLogger.LogDebug("[InfiniteStamina] Disabled");
                     }
                     return;
                 }
@@ -62,10 +62,10 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 if (!_bypassApplied)
                     ApplyFatigueBypass(localPlayer);
 
-                // ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
-                // "Scatter-like" batching ¨C mirror old pattern:
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                // "Scatter-like" batching ï¿½C mirror old pattern:
                 // build a batch of writes, then execute once.
-                // ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 var batch = new StaminaWriteBatch();
                 ApplyInfiniteStamina(localPlayer, batch);
 
@@ -75,12 +75,12 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 if (stateChanged)
                 {
                     _lastEnabledState = true;
-                    //Debug.WriteLine("[InfiniteStamina] Enabled");
+                    //DebugLogger.LogDebug("[InfiniteStamina] Enabled");
                 }
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"[InfiniteStamina] Error in TryApply: {ex}");
+                //DebugLogger.LogDebug($"[InfiniteStamina] Error in TryApply: {ex}");
                 ClearCache();
             }
         }
@@ -112,7 +112,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 writes.Add(staminaObj + Offsets.PhysicalValue.Current, MAX_STAMINA);
 
                 // Optional: if you want logs like the old ScatterWriteHandle callbacks:
-                // Debug.WriteLine($"[InfiniteStamina] Stamina refilled: {currentStamina:F1} -> {MAX_STAMINA:F1}");
+                // DebugLogger.LogDebug($"[InfiniteStamina] Stamina refilled: {currentStamina:F1} -> {MAX_STAMINA:F1}");
             }
 
             if (currentOxygen < MAX_OXYGEN * REFILL_THRESHOLD)
@@ -120,7 +120,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 writes.Add(oxygenObj + Offsets.PhysicalValue.Current, MAX_OXYGEN);
 
                 // Optional logging:
-                // Debug.WriteLine($"[InfiniteStamina] Oxygen refilled: {currentOxygen:F1} -> {MAX_OXYGEN:F1}");
+                // DebugLogger.LogDebug($"[InfiniteStamina] Oxygen refilled: {currentOxygen:F1} -> {MAX_OXYGEN:F1}");
             }
         }
 
@@ -295,14 +295,14 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
             ClearCache();
         }
 
-        // ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // Minimal "scatter-like" batch for stamina writes only.
         // This mirrors the old ScatterWriteHandle usage:
         //   - queue entries via Add(...)
         //   - apply them in one Execute() call.
         // If you want real DMA scatter, swap this class to use
         // Memory.CreateScatter(...) + VmmScatter writes instead.
-        // ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         private sealed class StaminaWriteBatch
         {
             private struct Entry

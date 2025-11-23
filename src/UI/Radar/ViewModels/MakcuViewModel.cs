@@ -138,7 +138,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                 OnPropertyChanged(nameof(IsMemWritesEnabled)); // Update dependent UI
                 
                 // Log the change
-                System.Diagnostics.Debug.WriteLine($"[Makcu] MemWrites {(value ? "ENABLED" : "DISABLED")}");
+                DebugLogger.LogDebug($"[Makcu] MemWrites {(value ? "ENABLED" : "DISABLED")}");
             }
         }
         
@@ -293,7 +293,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing devices: {ex}");
+                DebugLogger.LogDebug($"Error refreshing devices: {ex}");
             }
         }
 
@@ -351,7 +351,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Disconnect error: {ex}");
+                DebugLogger.LogDebug($"Disconnect error: {ex}");
             }
         }
 
@@ -410,7 +410,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                     int step = 50;  // pixels
                     int delay = 200; // ms
 
-                    System.Diagnostics.Debug.WriteLine("[MakcuTest] Starting movement test");
+                    DebugLogger.LogDebug("[MakcuTest] Starting movement test");
 
                     // Right
                     Device.move(step, 0);
@@ -438,7 +438,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                         System.Threading.Thread.Sleep(100);
                     }
 
-                    System.Diagnostics.Debug.WriteLine("[MakcuTest] Movement test complete");
+                    DebugLogger.LogDebug("[MakcuTest] Movement test complete");
                 });
 
                 System.Windows.MessageBox.Show(
@@ -458,7 +458,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                     "Test Move",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
-                System.Diagnostics.Debug.WriteLine($"[MakcuTest] Error: {ex}");
+                DebugLogger.LogDebug($"[MakcuTest] Error: {ex}");
             }
             finally
             {

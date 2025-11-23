@@ -5,6 +5,7 @@
 
 using LoneEftDmaRadar.DMA;
 using LoneEftDmaRadar.Tarkov.GameWorld.Player;
+using LoneEftDmaRadar.UI.Misc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -39,7 +40,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
 
             if (localPlayer == null)
             {
-                Debug.WriteLine("[MemWritesManager] LocalPlayer is null");
+                DebugLogger.LogDebug("[MemWritesManager] LocalPlayer is null");
                 return;
             }
 
@@ -48,7 +49,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 if(!Memory.InRaid)
                     return;
 
-                //Debug.WriteLine($"[MemWritesManager] Applying {_features.Count} features");
+                //DebugLogger.LogDebug($"[MemWritesManager] Applying {_features.Count} features");
 
                 foreach (var feature in _features)
                 {
@@ -58,13 +59,13 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[MemWritesManager] Feature error: {ex}");
+                        DebugLogger.LogDebug($"[MemWritesManager] Feature error: {ex}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MemWritesManager] Apply error: {ex}");
+                DebugLogger.LogDebug($"[MemWritesManager] Apply error: {ex}");
             }
         }
 

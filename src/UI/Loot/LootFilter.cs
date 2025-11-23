@@ -39,6 +39,7 @@ namespace LoneEftDmaRadar.UI.Loot
         public static bool ShowMeds;
         public static bool ShowFood;
         public static bool ShowBackpacks;
+        public static bool ShowQuestItems = App.Config?.Loot?.ShowQuestItems ?? true;
 
         /// <summary>
         /// Creates a loot filter based on current Loot Filter settings.
@@ -55,6 +56,8 @@ namespace LoneEftDmaRadar.UI.Loot
             {
                 Predicate<LootItem> p = x => // Default Predicate
                 {
+                    if (x.IsQuestItem)
+                        return true;
                     return (x.IsRegularLoot || x.IsValuableLoot || x.IsImportant || x.IsWishlisted) ||
                                 (showBackpacks && x.IsBackpack) ||
                                 (showMeds && x.IsMeds) ||

@@ -127,7 +127,7 @@ namespace LoneEftDmaRadar.UI.Misc
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FirearmManager] ERROR: {ex}");
+                DebugLogger.LogDebug($"[FirearmManager] ERROR: {ex}");
             }
         }
 

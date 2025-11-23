@@ -54,64 +54,64 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
 
         public override void TryApply(LocalPlayer localPlayer)
         {
-            //Debug.WriteLine($"[NoRecoil] TryApply called - Enabled: {Enabled}");
+            //DebugLogger.LogDebug($"[NoRecoil] TryApply called - Enabled: {Enabled}");
 
             try
             {
                 if (localPlayer == null)
                 {
-                    //Debug.WriteLine("[NoRecoil] LocalPlayer is null");
+                    //DebugLogger.LogDebug("[NoRecoil] LocalPlayer is null");
                     return;
                 }
 
                 var stateChanged = Enabled != _lastEnabledState;
-                //Debug.WriteLine($"[NoRecoil] State changed: {stateChanged}, LastState: {_lastEnabledState}, CurrentState: {Enabled}");
+                //DebugLogger.LogDebug($"[NoRecoil] State changed: {stateChanged}, LastState: {_lastEnabledState}, CurrentState: {Enabled}");
 
                 if (!Enabled)
                 {
                     if (stateChanged)
                     {
-                        //Debug.WriteLine("[NoRecoil] Disabling - calling ResetNoRecoil");
+                        //DebugLogger.LogDebug("[NoRecoil] Disabling - calling ResetNoRecoil");
                         ResetNoRecoil(localPlayer);
                         _lastEnabledState = false;
-                        //Debug.WriteLine("[NoRecoil] Disabled");
+                        //DebugLogger.LogDebug("[NoRecoil] Disabled");
                     }
                     return;
                 }
 
-                //Debug.WriteLine($"[NoRecoil] LocalPlayer.PWA: 0x{localPlayer.PWA:X}");
+                //DebugLogger.LogDebug($"[NoRecoil] LocalPlayer.PWA: 0x{localPlayer.PWA:X}");
 
                 // Early-out if PWA is not valid (not in raid / no weapon)
                 if (!MemDMA.IsValidVirtualAddress(localPlayer.PWA))
                 {
-                    //Debug.WriteLine("[NoRecoil] PWA is invalid - no weapon equipped?");
+                    //DebugLogger.LogDebug("[NoRecoil] PWA is invalid - no weapon equipped?");
                     if (stateChanged)
-                        //Debug.WriteLine("[NoRecoil] Enabled but PWA invalid ¨C waiting for raid/weapon");
+                        //DebugLogger.LogDebug("[NoRecoil] Enabled but PWA invalid ¨C waiting for raid/weapon");
                     ClearCache();
                     _lastEnabledState = Enabled;
                     return;
                 }
 
-                //Debug.WriteLine("[NoRecoil] PWA is valid, calling ApplyNoRecoil");
+                //DebugLogger.LogDebug("[NoRecoil] PWA is valid, calling ApplyNoRecoil");
                 ApplyNoRecoil(localPlayer);
 
                 if (stateChanged)
                 {
                     _lastEnabledState = true;
-                    //Debug.WriteLine("[NoRecoil] Enabled (state changed)");
+                    //DebugLogger.LogDebug("[NoRecoil] Enabled (state changed)");
                 }
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"[NoRecoil] Error in TryApply: {ex}");
-                //Debug.WriteLine($"[NoRecoil] Stack trace: {ex.StackTrace}");
+                //DebugLogger.LogDebug($"[NoRecoil] Error in TryApply: {ex}");
+                //DebugLogger.LogDebug($"[NoRecoil] Stack trace: {ex.StackTrace}");
                 ClearCache();
             }
         }
 
 private void ApplyNoRecoil(LocalPlayer localPlayer)
 {
-    //Debug.WriteLine("[NoRecoil] ApplyNoRecoil called");
+    //DebugLogger.LogDebug("[NoRecoil] ApplyNoRecoil called");
 
     try
     {
@@ -120,30 +120,30 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
         float recoilAmount = Math.Clamp(1f - (App.Config.MemWrites.NoRecoilAmount / 100f), 0f, 1f);
         float swayAmount   = Math.Clamp(1f - (App.Config.MemWrites.NoSwayAmount   / 100f), 0f, 1f);
 
-        //Debug.WriteLine($"[NoRecoil] Target - RecoilAmount: {recoilAmount:F3}, SwayAmount: {swayAmount:F3}");
+        //DebugLogger.LogDebug($"[NoRecoil] Target - RecoilAmount: {recoilAmount:F3}, SwayAmount: {swayAmount:F3}");
 
         var (breathEffector, shotEffector, newShotRecoil) = GetEffectorPointers(localPlayer);
 
-        //Debug.WriteLine($"[NoRecoil] Pointers - Breath: 0x{breathEffector:X}, Shot: 0x{shotEffector:X}, NewShotRecoil: 0x{newShotRecoil:X}");
+        //DebugLogger.LogDebug($"[NoRecoil] Pointers - Breath: 0x{breathEffector:X}, Shot: 0x{shotEffector:X}, NewShotRecoil: 0x{newShotRecoil:X}");
 
         if (!ValidatePointers(breathEffector, shotEffector, newShotRecoil))
         {
-            //Debug.WriteLine("[NoRecoil] Invalid effector pointers, clearing cache");
+            //DebugLogger.LogDebug("[NoRecoil] Invalid effector pointers, clearing cache");
             ClearCache();
             return;
         }
 
-        //Debug.WriteLine("[NoRecoil] Pointers valid, reading current values...");
+        //DebugLogger.LogDebug("[NoRecoil] Pointers valid, reading current values...");
 
         // ? Read CURRENT values from game memory
         float currentBreath = Memory.ReadValue<float>(
             breathEffector + Offsets.BreathEffector.Intensity, false);
 
-        //Debug.WriteLine($"[NoRecoil] Current breath intensity: {currentBreath:F3}");
+        //DebugLogger.LogDebug($"[NoRecoil] Current breath intensity: {currentBreath:F3}");
 
         if (currentBreath < 0f || currentBreath > 5f)
         {
-            //Debug.WriteLine($"[NoRecoil] Invalid breath value: {currentBreath}, clearing cache");
+            //DebugLogger.LogDebug($"[NoRecoil] Invalid breath value: {currentBreath}, clearing cache");
             ClearCache();
             return;
         }
@@ -151,38 +151,38 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
         Vector3 currentRecoil = Memory.ReadValue<Vector3>(
             newShotRecoil + Offsets.NewShotRecoil.IntensitySeparateFactors, false);
 
-        //Debug.WriteLine($"[NoRecoil] Current recoil vector: ({currentRecoil.X:F3}, {currentRecoil.Y:F3}, {currentRecoil.Z:F3})");
+        //DebugLogger.LogDebug($"[NoRecoil] Current recoil vector: ({currentRecoil.X:F3}, {currentRecoil.Y:F3}, {currentRecoil.Z:F3})");
 
         int currentMask = Memory.ReadValue<int>(
             localPlayer.PWA + Offsets.ProceduralWeaponAnimation.Mask, false);
 
-        //Debug.WriteLine($"[NoRecoil] Current PWA mask: {currentMask}");
+        //DebugLogger.LogDebug($"[NoRecoil] Current PWA mask: {currentMask}");
 
         // ? Compare CURRENT vs TARGET (not target vs last target!)
         if (Math.Abs(currentBreath - swayAmount) > 0.001f)
         {
-            //Debug.WriteLine($"[NoRecoil] Writing sway: {currentBreath:F3} -> {swayAmount:F3}");
+            //DebugLogger.LogDebug($"[NoRecoil] Writing sway: {currentBreath:F3} -> {swayAmount:F3}");
             Memory.WriteValue(
                 breathEffector + Offsets.BreathEffector.Intensity,
                 swayAmount);
         }
         else
         {
-            //Debug.WriteLine($"[NoRecoil] Sway already correct: {currentBreath:F3}");
+            //DebugLogger.LogDebug($"[NoRecoil] Sway already correct: {currentBreath:F3}");
         }
 
         // ? Compare CURRENT recoil vs TARGET
         var recoilVec = new Vector3(recoilAmount, recoilAmount, recoilAmount);
         if (Vector3.Distance(currentRecoil, recoilVec) > 0.001f)
         {
-            //Debug.WriteLine($"[NoRecoil] Writing recoil: {currentRecoil} -> {recoilVec}");
+            //DebugLogger.LogDebug($"[NoRecoil] Writing recoil: {currentRecoil} -> {recoilVec}");
             Memory.WriteValue(
                 newShotRecoil + Offsets.NewShotRecoil.IntensitySeparateFactors,
                 recoilVec);
         }
         else
         {
-            //Debug.WriteLine($"[NoRecoil] Recoil already correct: {currentRecoil}");
+            //DebugLogger.LogDebug($"[NoRecoil] Recoil already correct: {currentRecoil}");
         }
 
         // Mask management
@@ -196,46 +196,46 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
             targetMask = ORIGINAL_PWA_MASK;
         }
 
-        //Debug.WriteLine($"[NoRecoil] Target mask: {targetMask} (current: {currentMask})");
+        //DebugLogger.LogDebug($"[NoRecoil] Target mask: {targetMask} (current: {currentMask})");
 
         if (currentMask != targetMask)
         {
-            //Debug.WriteLine($"[NoRecoil] Writing mask: {currentMask} -> {targetMask}");
+            //DebugLogger.LogDebug($"[NoRecoil] Writing mask: {currentMask} -> {targetMask}");
             Memory.WriteValue(
                 localPlayer.PWA + Offsets.ProceduralWeaponAnimation.Mask,
                 targetMask);
         }
         else
         {
-            //Debug.WriteLine($"[NoRecoil] Mask already correct: {currentMask}");
+            //DebugLogger.LogDebug($"[NoRecoil] Mask already correct: {currentMask}");
         }
 
         _lastRecoilAmount = recoilAmount;
         _lastSwayAmount   = swayAmount;
 
-        //Debug.WriteLine("[NoRecoil] ApplyNoRecoil completed successfully");
+        //DebugLogger.LogDebug("[NoRecoil] ApplyNoRecoil completed successfully");
     }
     catch (Exception ex)
     {
-        //Debug.WriteLine($"[NoRecoil] Error in ApplyNoRecoil: {ex}");
-        //Debug.WriteLine($"[NoRecoil] Stack trace: {ex.StackTrace}");
+        //DebugLogger.LogDebug($"[NoRecoil] Error in ApplyNoRecoil: {ex}");
+        //DebugLogger.LogDebug($"[NoRecoil] Stack trace: {ex.StackTrace}");
         throw;
     }
 }
 
         private void ResetNoRecoil(LocalPlayer localPlayer)
         {
-            //Debug.WriteLine("[NoRecoil] ResetNoRecoil called");
+            //DebugLogger.LogDebug("[NoRecoil] ResetNoRecoil called");
 
             try
             {
                 var (breathEffector, shotEffector, newShotRecoil) = GetEffectorPointers(localPlayer);
 
-                //Debug.WriteLine($"[NoRecoil] Reset pointers - Breath: 0x{breathEffector:X}, Shot: 0x{shotEffector:X}, NewShotRecoil: 0x{newShotRecoil:X}");
+                //DebugLogger.LogDebug($"[NoRecoil] Reset pointers - Breath: 0x{breathEffector:X}, Shot: 0x{shotEffector:X}, NewShotRecoil: 0x{newShotRecoil:X}");
 
                 if (ValidatePointers(breathEffector, shotEffector, newShotRecoil))
                 {
-                    //Debug.WriteLine("[NoRecoil] Pointers valid, resetting to defaults...");
+                    //DebugLogger.LogDebug("[NoRecoil] Pointers valid, resetting to defaults...");
 
                     Memory.WriteValue(
                         breathEffector + Offsets.BreathEffector.Intensity,
@@ -249,11 +249,11 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
                         localPlayer.PWA + Offsets.ProceduralWeaponAnimation.Mask,
                         ORIGINAL_PWA_MASK);
 
-                    //Debug.WriteLine("[NoRecoil] Reset to defaults");
+                    //DebugLogger.LogDebug("[NoRecoil] Reset to defaults");
                 }
                 else
                 {
-                    //Debug.WriteLine("[NoRecoil] Reset failed - invalid pointers");
+                    //DebugLogger.LogDebug("[NoRecoil] Reset failed - invalid pointers");
                 }
 
                 _lastRecoilAmount = 1.0f;
@@ -262,8 +262,8 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"[NoRecoil] Reset error: {ex}");
-                //Debug.WriteLine($"[NoRecoil] Stack trace: {ex.StackTrace}");
+                //DebugLogger.LogDebug($"[NoRecoil] Reset error: {ex}");
+                //DebugLogger.LogDebug($"[NoRecoil] Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -271,12 +271,12 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
         {
             var pwa = localPlayer.PWA;
 
-            //Debug.WriteLine($"[NoRecoil] GetEffectorPointers - PWA: 0x{pwa:X}, LastPWA: 0x{_lastPwaPtr:X}");
+            //DebugLogger.LogDebug($"[NoRecoil] GetEffectorPointers - PWA: 0x{pwa:X}, LastPWA: 0x{_lastPwaPtr:X}");
 
             // If PWA changed (weapon swap, death, etc.), drop cache
             if (pwa != _lastPwaPtr)
             {
-                //Debug.WriteLine("[NoRecoil] PWA changed, clearing cache");
+                //DebugLogger.LogDebug("[NoRecoil] PWA changed, clearing cache");
                 ClearCache();
                 _lastPwaPtr = pwa;
             }
@@ -286,38 +286,38 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
                 MemDMA.IsValidVirtualAddress(_cachedShotEffector) &&
                 MemDMA.IsValidVirtualAddress(_cachedNewShotRecoil))
             {
-                //Debug.WriteLine("[NoRecoil] Using cached pointers");
+                //DebugLogger.LogDebug("[NoRecoil] Using cached pointers");
                 return (_cachedBreathEffector, _cachedShotEffector, _cachedNewShotRecoil);
             }
 
-            //Debug.WriteLine("[NoRecoil] Cache invalid, reading from memory...");
+            //DebugLogger.LogDebug("[NoRecoil] Cache invalid, reading from memory...");
 
             if (!MemDMA.IsValidVirtualAddress(pwa))
             {
-                //Debug.WriteLine("[NoRecoil] PWA invalid, returning zeros");
+                //DebugLogger.LogDebug("[NoRecoil] PWA invalid, returning zeros");
                 return (0, 0, 0);
             }
 
             var breathEffector = Memory.ReadPtr(pwa + Offsets.ProceduralWeaponAnimation.Breath, false);
             var shotEffector   = Memory.ReadPtr(pwa + Offsets.ProceduralWeaponAnimation.Shootingg, false);
 
-            //Debug.WriteLine($"[NoRecoil] Read - BreathEffector: 0x{breathEffector:X}, ShotEffector: 0x{shotEffector:X}");
+            //DebugLogger.LogDebug($"[NoRecoil] Read - BreathEffector: 0x{breathEffector:X}, ShotEffector: 0x{shotEffector:X}");
 
             if (!MemDMA.IsValidVirtualAddress(breathEffector) ||
                 !MemDMA.IsValidVirtualAddress(shotEffector))
             {
-                //Debug.WriteLine("[NoRecoil] Invalid breathEffector or shotEffector");
+                //DebugLogger.LogDebug("[NoRecoil] Invalid breathEffector or shotEffector");
                 return (0, 0, 0);
             }
 
             var newShotRecoil = Memory.ReadPtr(
                 shotEffector + Offsets.ShotEffector.NewShotRecoil, false);
 
-            //Debug.WriteLine($"[NoRecoil] Read - NewShotRecoil: 0x{newShotRecoil:X}");
+            //DebugLogger.LogDebug($"[NoRecoil] Read - NewShotRecoil: 0x{newShotRecoil:X}");
 
             if (!MemDMA.IsValidVirtualAddress(newShotRecoil))
             {
-                //Debug.WriteLine("[NoRecoil] Invalid newShotRecoil");
+                //DebugLogger.LogDebug("[NoRecoil] Invalid newShotRecoil");
                 return (0, 0, 0);
             }
 
@@ -326,7 +326,7 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
             _cachedShotEffector   = shotEffector;
             _cachedNewShotRecoil  = newShotRecoil;
 
-            //Debug.WriteLine("[NoRecoil] Cached new pointers");
+            //DebugLogger.LogDebug("[NoRecoil] Cached new pointers");
 
             return (breathEffector, shotEffector, newShotRecoil);
         }
@@ -340,7 +340,7 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
 
         private void ClearCache()
         {
-            //Debug.WriteLine("[NoRecoil] Clearing cache");
+            //DebugLogger.LogDebug("[NoRecoil] Clearing cache");
             _cachedBreathEffector = 0;
             _cachedShotEffector   = 0;
             _cachedNewShotRecoil  = 0;
@@ -348,7 +348,7 @@ private void ApplyNoRecoil(LocalPlayer localPlayer)
 
         public override void OnRaidStart()
         {
-            //Debug.WriteLine("[NoRecoil] OnRaidStart called");
+            //DebugLogger.LogDebug("[NoRecoil] OnRaidStart called");
             _lastEnabledState  = default;
             _lastRecoilAmount  = 1.0f;
             _lastSwayAmount    = 1.0f;

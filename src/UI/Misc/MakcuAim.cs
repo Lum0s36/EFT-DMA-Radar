@@ -89,7 +89,7 @@ namespace LoneEftDmaRadar.UI.Misc
             };
             _worker.Start();
 
-            Debug.WriteLine("[MakcuAimbot] Started");
+            DebugLogger.LogDebug("[MakcuAimbot] Started");
         }
 
         public void Dispose()
@@ -98,7 +98,7 @@ namespace LoneEftDmaRadar.UI.Misc
             {
                 _disposed = true;
 
-                Debug.WriteLine("[MakcuAimbot] Disposed");
+                DebugLogger.LogDebug("[MakcuAimbot] Disposed");
             }
         }
         public void OnRaidEnd()
@@ -223,7 +223,7 @@ namespace LoneEftDmaRadar.UI.Misc
                 catch (Exception ex)
                 {
                     _debugStatus = $"Error: {ex.Message}";
-                    Debug.WriteLine($"[MakcuAimbot] Error: {ex}");
+                    DebugLogger.LogDebug($"[MakcuAimbot] Error: {ex}");
                     ResetTarget();
                     Thread.Sleep(100);
                 }
@@ -321,46 +321,46 @@ private bool ShouldTargetPlayer(AbstractPlayer player, LocalPlayer localPlayer)
     bool isDebugPlayer = _dbgTotalPlayers <= 3;
     
     if (isDebugPlayer)
-        Debug.WriteLine($"\n[Makcu] === Checking Player #{_dbgTotalPlayers} ===");
+        DebugLogger.LogDebug($"\n[Makcu] === Checking Player #{_dbgTotalPlayers} ===");
     
     // Don't target self
     if (player == localPlayer)
     {
-        if (isDebugPlayer) Debug.WriteLine($"  ? REJECTED: player == localPlayer");
+        if (isDebugPlayer) DebugLogger.LogDebug($"  ? REJECTED: player == localPlayer");
         return false;
     }
     
     if (player is LocalPlayer)
     {
-        if (isDebugPlayer) Debug.WriteLine($"  ? REJECTED: player is LocalPlayer");
+        if (isDebugPlayer) DebugLogger.LogDebug($"  ? REJECTED: player is LocalPlayer");
         return false;
     }
     
     if (!player.IsActive)
     {
-        if (isDebugPlayer) Debug.WriteLine($"  ? REJECTED: !IsActive");
+        if (isDebugPlayer) DebugLogger.LogDebug($"  ? REJECTED: !IsActive");
         return false;
     }
     
     if (!player.IsAlive)
     {
-        if (isDebugPlayer) Debug.WriteLine($"  ? REJECTED: !IsAlive");
+        if (isDebugPlayer) DebugLogger.LogDebug($"  ? REJECTED: !IsAlive");
         return false;
     }
 
     // Check player type filters
     if (player.Type == PlayerType.Teammate)
     {
-        if (isDebugPlayer) Debug.WriteLine($"  ? REJECTED: Type is Teammate");
+        if (isDebugPlayer) DebugLogger.LogDebug($"  ? REJECTED: Type is Teammate");
         return false;
     }
 
     if (isDebugPlayer)
     {
-        Debug.WriteLine($"  Player Type: {player.Type}");
-        Debug.WriteLine($"  Config Filters:");
-        Debug.WriteLine($"    PMC={Config.TargetPMC}, PScav={Config.TargetPlayerScav}");
-        Debug.WriteLine($"    AI={Config.TargetAIScav}, Boss={Config.TargetBoss}, Raider={Config.TargetRaider}");
+        DebugLogger.LogDebug($"  Player Type: {player.Type}");
+        DebugLogger.LogDebug($"  Config Filters:");
+        DebugLogger.LogDebug($"    PMC={Config.TargetPMC}, PScav={Config.TargetPlayerScav}");
+        DebugLogger.LogDebug($"    AI={Config.TargetAIScav}, Boss={Config.TargetBoss}, Raider={Config.TargetRaider}");
     }
 
     bool shouldTarget = player.Type switch
@@ -377,9 +377,9 @@ private bool ShouldTargetPlayer(AbstractPlayer player, LocalPlayer localPlayer)
     if (isDebugPlayer)
     {
         if (shouldTarget)
-            Debug.WriteLine($"  ? ACCEPTED!");
+            DebugLogger.LogDebug($"  ? ACCEPTED!");
         else
-            Debug.WriteLine($"  ? REJECTED: Type {player.Type} not in filters or default case");
+            DebugLogger.LogDebug($"  ? REJECTED: Type {player.Type} not in filters or default case");
     }
     
     return shouldTarget;
@@ -470,7 +470,7 @@ private bool ShouldTargetPlayer(AbstractPlayer player, LocalPlayer localPlayer)
             if (App.Config.MemWrites.Enabled && App.Config.MemWrites.MemoryAimEnabled)
             {
                 ApplyMemoryAim(localPlayer, targetPos);
-                Debug.WriteLine($"[MakcuAimbot] Using MemoryAim for target {target.Name}");
+                DebugLogger.LogDebug($"[MakcuAimbot] Using MemoryAim for target {target.Name}");
                 return;
             }
 
@@ -492,7 +492,7 @@ private bool ShouldTargetPlayer(AbstractPlayer player, LocalPlayer localPlayer)
             if (moveX != 0 || moveY != 0)
             {
                 Device.move(moveX, moveY);
-                Debug.WriteLine($"[MakcuAimbot] Aiming at target {target.Name}: Move({moveX}, {moveY})");
+                DebugLogger.LogDebug($"[MakcuAimbot] Aiming at target {target.Name}: Move({moveX}, {moveY})");
             }
         }
 private void ApplyMemoryAim(LocalPlayer localPlayer, Vector3 targetPosition)
@@ -539,14 +539,14 @@ private void ApplyMemoryAim(LocalPlayer localPlayer, Vector3 targetPosition)
         Vector3 writeVec = new Vector3(gunAngle.X, -1.0f, gunAngle.Z * -1.0f);
         Memory.WriteValue(shotDirectionAddr, writeVec);
 
-        Debug.WriteLine($"[MemoryAim] Fireport: {fpPos}");
-        Debug.WriteLine($"[MemoryAim] Target:   {targetPosition}");
-        Debug.WriteLine($"[MemoryAim] AimAngle: {aimAngle}, ViewAngles: {viewAngles}, ={delta}");
-        Debug.WriteLine($"[MemoryAim] WriteVec: {writeVec}");
+        DebugLogger.LogDebug($"[MemoryAim] Fireport: {fpPos}");
+        DebugLogger.LogDebug($"[MemoryAim] Target:   {targetPosition}");
+        DebugLogger.LogDebug($"[MemoryAim] AimAngle: {aimAngle}, ViewAngles: {viewAngles}, ={delta}");
+        DebugLogger.LogDebug($"[MemoryAim] WriteVec: {writeVec}");
     }
     catch (Exception ex)
     {
-        Debug.WriteLine($"[MemoryAim] Error: {ex}");
+        DebugLogger.LogDebug($"[MemoryAim] Error: {ex}");
     }
 }
 
@@ -629,7 +629,7 @@ private static float RadToDeg(float radians)
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MakcuAimbot] Prediction failed: {ex}");
+                DebugLogger.LogDebug($"[MakcuAimbot] Prediction failed: {ex}");
                 return targetPos;
             }
         }
@@ -641,14 +641,14 @@ private static float RadToDeg(float radians)
                 var firearmManager = localPlayer.FirearmManager;
                 if (firearmManager == null)
                 {
-                    Debug.WriteLine("[MakcuAimbot] FirearmManager is null");
+                    DebugLogger.LogDebug("[MakcuAimbot] FirearmManager is null");
                     return null;
                 }
 
                 var hands = firearmManager.HandsController;
                 if (hands.Item2 == false) // Not a weapon
                 {
-                    Debug.WriteLine("[MakcuAimbot] HandsController is not a weapon");
+                    DebugLogger.LogDebug("[MakcuAimbot] HandsController is not a weapon");
                     return null;
                 }
 
@@ -659,7 +659,7 @@ private static float RadToDeg(float radians)
                 var ammoTemplate = FirearmManager.MagazineManager.GetAmmoTemplateFromWeapon(itemBase);
                 if (ammoTemplate == 0)
                 {
-                    Debug.WriteLine("[MakcuAimbot] No ammo template found");
+                    DebugLogger.LogDebug("[MakcuAimbot] No ammo template found");
                     return null;
                 }
 
@@ -684,7 +684,7 @@ private static float RadToDeg(float radians)
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MakcuAimbot] Failed to get ballistics: {ex}");
+                DebugLogger.LogDebug($"[MakcuAimbot] Failed to get ballistics: {ex}");
                 return null;
             }
         }
@@ -913,7 +913,7 @@ private static float RadToDeg(float radians)
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MakcuAimbot] DrawDebug error: {ex}");
+                DebugLogger.LogDebug($"[MakcuAimbot] DrawDebug error: {ex}");
             }
         }
         #endregion

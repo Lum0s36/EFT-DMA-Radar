@@ -40,7 +40,10 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             Memory.Loot?.RefreshFilter();
         }
 
-        public RadarOverlayViewModel() { }
+        public RadarOverlayViewModel()
+        {
+            LootFilter.ShowQuestItems = App.Config.Loot.ShowQuestItems;
+        }
 
         // ─── Overlay visibility ────────────────────────────────────────────────
         private string _mapFreeButtonText = "Map Free";
@@ -212,6 +215,20 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                 {
                     LootFilter.ShowBackpacks = value;
                     OnPropertyChanged(nameof(ShowBackpacks));
+                }
+            }
+        }
+
+        public bool ShowQuestItems
+        {
+            get => LootFilter.ShowQuestItems;
+            set
+            {
+                if (LootFilter.ShowQuestItems != value)
+                {
+                    LootFilter.ShowQuestItems = value;
+                    App.Config.Loot.ShowQuestItems = value;
+                    OnPropertyChanged(nameof(ShowQuestItems));
                 }
             }
         }

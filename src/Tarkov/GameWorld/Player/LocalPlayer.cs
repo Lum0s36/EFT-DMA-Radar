@@ -100,7 +100,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Player
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[LocalPlayer] FirearmManager update failed: {ex}");
+                DebugLogger.LogDebug($"[LocalPlayer] FirearmManager update failed: {ex}");
             }
         }
 

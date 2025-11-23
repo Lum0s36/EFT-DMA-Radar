@@ -36,13 +36,13 @@ namespace LoneEftDmaRadar.DMA
             try
             {
                 _input = new VmmInputManager(vmm);
-                Debug.WriteLine("[InputManager] VmmInputManager initialized.");
+                DebugLogger.LogDebug("[InputManager] VmmInputManager initialized.");
             }
             catch (Exception ex)
             {
                 // Do NOT throw; this is our failsafe.
                 _input = null;
-                Debug.WriteLine($"[InputManager] Failed to initialize VmmInputManager (Win32 backend). " +
+                DebugLogger.LogDebug($"[InputManager] Failed to initialize VmmInputManager (Win32 backend). " +
                                 $"Hotkeys will use Makcu-only fallback if available. {ex}");
             }
 
@@ -74,7 +74,7 @@ namespace LoneEftDmaRadar.DMA
                 catch (Exception ex)
                 {
                     // If Win32 backend dies mid-run, we just fall back to Makcu.
-                    Debug.WriteLine($"[InputManager] VmmInputManager.UpdateKeys failed: {ex}");
+                    DebugLogger.LogDebug($"[InputManager] VmmInputManager.UpdateKeys failed: {ex}");
                     // We keep _input non-null but effectively ignore it after this tick.
                     haveWin32 = false;
                 }

@@ -341,6 +341,9 @@ namespace LoneEftDmaRadar.UI.ESP
             {
                 // Filter based on ESP settings
                 bool isCorpse = item is LootCorpse;
+                bool isQuest = item.IsQuestItem;
+                if (isQuest && !App.Config.UI.EspQuestLoot)
+                    continue;
                 if (isCorpse && !App.Config.UI.EspCorpses)
                     continue;
 
@@ -393,7 +396,12 @@ namespace LoneEftDmaRadar.UI.ESP
                      DxColor circleColor = GetLootColorForRender();
                      DxColor textColor = circleColor;
 
-                     if (item.Important)
+                     if (isQuest)
+                     {
+                         circleColor = ToColor(SKPaints.PaintQuestItem);
+                         textColor = circleColor;
+                     }
+                     else if (item.Important)
                      {
                          circleColor = ToColor(SKPaints.PaintFilteredLoot);
                          textColor = circleColor;

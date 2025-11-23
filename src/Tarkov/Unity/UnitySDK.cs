@@ -36,22 +36,22 @@ namespace LoneEftDmaRadar.Tarkov.Unity
         {
             public const uint GameObjectManager = 0x1A21378;
             public const uint AllCameras = 0x19F0040;
-            public const uint PhysiX = 0x1ACD770;
+            //public const uint PhysiX = 0x1ACD770;
 
             public const uint GameObject_ObjectClassOffset = 0x80;
             public const uint GameObject_ComponentsOffset = 0x58;
             public const uint GameObject_NameOffset = 0x88;
 
-            public const uint MonoBehaviour_ObjectClassOffset = 0x38;
-            public const uint MonoBehaviour_GameObjectOffset = 0x48;
-            public const uint MonoBehaviour_EnabledOffset = 0x38;
+            //public const uint MonoBehaviour_ObjectClassOffset = 0x38;
+            //public const uint MonoBehaviour_GameObjectOffset = 0x48;
+            //public const uint MonoBehaviour_EnabledOffset = 0x38;
             public const uint MonoBehaviour_IsAddedOffset = 0x39;
 
-            public const uint Component_ObjectClassOffset = 0x40;
+            public const uint Component_ObjectClassOffset = 0x38;
             public const uint Component_GameObjectOffset = 0x58;
 
-            public const uint TransformInternal_TransformAccessOffset = 0x90;
-            public const uint TransformAccess_IndexOffset = 0x70;
+            public const uint TransformInternal_TransformAccessOffset = 0x88;
+            public const uint TransformAccess_IndexOffset = 0x90;
             public const uint TransformAccess_HierarchyOffset = 0x68;
 
             public const uint Hierarchy_VerticesOffset = 0x38;

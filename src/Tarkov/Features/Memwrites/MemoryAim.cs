@@ -5,6 +5,7 @@
 
 using LoneEftDmaRadar.DMA;
 using LoneEftDmaRadar.Tarkov.GameWorld.Player;
+using LoneEftDmaRadar.UI.Misc;
 using System;
 using System.Diagnostics;
 using System.Numerics;
@@ -65,7 +66,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                         _lastEnabledState = false;
                         _targetPosition = null;
                         _isEngaged = false;
-                        Debug.WriteLine("[MemoryAim] Disabled");
+                        DebugLogger.LogDebug("[MemoryAim] Disabled");
                     }
                     return;
                 }
@@ -73,13 +74,13 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 if (stateChanged)
                 {
                     _lastEnabledState = true;
-                    Debug.WriteLine("[MemoryAim] Enabled");
+                    DebugLogger.LogDebug("[MemoryAim] Enabled");
                 }
-                //Debug.WriteLine("[MemoryAim] TryApply called");
+                //DebugLogger.LogDebug("[MemoryAim] TryApply called");
                 // ? Only apply if aim key is held AND we have a target
                 if (!_isEngaged || _targetPosition == null)
                     return;
-                Debug.WriteLine("[MemoryAim] Applying aim");
+                DebugLogger.LogDebug("[MemoryAim] Applying aim");
                 ApplyMemoryAim(localPlayer, _targetPosition.Value);
                 
                 // Clear target after writing (will be set again next frame by MakcuAimbot if still aiming)
@@ -87,7 +88,7 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MemoryAim] Error: {ex}");
+                DebugLogger.LogDebug($"[MemoryAim] Error: {ex}");
             }
         }
 
@@ -95,11 +96,11 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
         {
             try
             {
-                Debug.WriteLine($"[MemoryAim] Applying aim to target at {targetPosition}");
+                DebugLogger.LogDebug($"[MemoryAim] Applying aim to target at {targetPosition}");
                 var firearmManager = localPlayer.FirearmManager;
                 if (firearmManager == null)
                 {
-                    Debug.WriteLine("[MemoryAim] FirearmManager is null");
+                    DebugLogger.LogDebug("[MemoryAim] FirearmManager is null");
                     return;
                 }
 
@@ -109,13 +110,13 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 // Validate fireport
                 if (!fireportPos.HasValue || fireportPos.Value == Vector3.Zero)
                 {
-                    Debug.WriteLine("[MemoryAim] Fireport position is null or zero");
+                    DebugLogger.LogDebug("[MemoryAim] Fireport position is null or zero");
                     return;
                 }
 
                 if (!fireportRot.HasValue)
                 {
-                    Debug.WriteLine("[MemoryAim] Fireport rotation is null");
+                    DebugLogger.LogDebug("[MemoryAim] Fireport rotation is null");
                     return;
                 }
 
@@ -128,23 +129,23 @@ namespace LoneEftDmaRadar.Tarkov.Features.MemWrites
                 
                 if (!MemDMA.IsValidVirtualAddress(shotDirectionAddr))
                 {
-                    Debug.WriteLine($"[MemoryAim] Invalid shot direction address: 0x{shotDirectionAddr:X}");
+                    DebugLogger.LogDebug($"[MemoryAim] Invalid shot direction address: 0x{shotDirectionAddr:X}");
                     return;
                 }
 
                 Memory.WriteValue(shotDirectionAddr, newDirection);
 
-                Debug.WriteLine($"[MemoryAim] ? Aim applied - Direction: {newDirection}");
+                DebugLogger.LogDebug($"[MemoryAim] ? Aim applied - Direction: {newDirection}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MemoryAim] ApplyMemoryAim error: {ex}");
+                DebugLogger.LogDebug($"[MemoryAim] ApplyMemoryAim error: {ex}");
             }
         }
 
         public override void OnRaidStart()
         {
-            Debug.WriteLine("[MemoryAim] OnRaidStart called");
+            DebugLogger.LogDebug("[MemoryAim] OnRaidStart called");
             _lastEnabledState = default;
             _targetPosition = null;
             _isEngaged = false;

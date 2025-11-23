@@ -3,6 +3,7 @@
  * MIT License - Copyright (c) 2025 Lone DMA
  */
 
+using LoneEftDmaRadar.UI.Misc;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -50,7 +51,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                 OnPropertyChanged(nameof(StatusText));
                 OnPropertyChanged(nameof(StatusColor));
 
-                System.Diagnostics.Debug.WriteLine($"[MemWrites] Master switch {(value ? "ENABLED" : "DISABLED")}");
+                DebugLogger.LogDebug($"[MemWrites] Master switch {(value ? "ENABLED" : "DISABLED")}");
             }
         }
 

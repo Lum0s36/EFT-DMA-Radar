@@ -36,7 +36,7 @@ namespace LoneEftDmaRadar.UI.Misc
         private long _makcuBusyUntilTicks;             // when it's safe to send the next smooth/bezier
         private static readonly double _ticksPerMs = (double)Stopwatch.Frequency / 1000.0;
 
-        // You can tune this if your firmware runs ~2¨C4ms per segment
+        // You can tune this if your firmware runs ~2ï¿½C4ms per segment
         private const int MakcuSegmentMsDefault = 3;
 
         // Optional: expose via config if you want
@@ -99,7 +99,7 @@ namespace LoneEftDmaRadar.UI.Misc
 
                 if (string.IsNullOrEmpty(com))
                 {
-                    Debug.WriteLine("[-] Makcu device not found via VID/PID or friendly name.");
+                    DebugLogger.LogDebug("[-] Makcu device not found via VID/PID or friendly name.");
                     return false;
                 }
 
@@ -107,27 +107,27 @@ namespace LoneEftDmaRadar.UI.Misc
 
                 if (!connected)
                 {
-                    Debug.WriteLine("[-] Failed to open Makcu serial port.");
+                    DebugLogger.LogDebug("[-] Failed to open Makcu serial port.");
                     DeviceKind = KmDeviceKind.Unknown;
                     return false;
                 }
 
                 if (!ValidateMakcuSignature())
                 {
-                    Debug.WriteLine("[-] Device did not return expected signature (km.MAKCU).");
+                    DebugLogger.LogDebug("[-] Device did not return expected signature (km.MAKCU).");
                     disconnect();
                     DeviceKind = KmDeviceKind.Unknown;
                     return false;
                 }
 
                 DeviceKind = KmDeviceKind.Makcu;
-                Debug.WriteLine("[+] Makcu connected and verified.");
+                DebugLogger.LogDebug("[+] Makcu connected and verified.");
                 return true;
             }
             catch (Exception ex)
             {
                 DeviceKind = KmDeviceKind.Unknown;
-                Debug.WriteLine($"[-] AutoConnectMakcu error: {ex}");
+                DebugLogger.LogDebug($"[-] AutoConnectMakcu error: {ex}");
                 return false;
             }
         }
@@ -273,12 +273,12 @@ namespace LoneEftDmaRadar.UI.Misc
                         Description = description
                     });
 
-                    Debug.WriteLine($"[Device] Found: {portName} - {description}");
+                    DebugLogger.LogDebug($"[Device] Found: {portName} - {description}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Device] Error enumerating: {ex}");
+                DebugLogger.LogDebug($"[Device] Error enumerating: {ex}");
             }
 
             return devices;
@@ -392,7 +392,7 @@ namespace LoneEftDmaRadar.UI.Misc
                 GetVersion();
                 Thread.Sleep(150);
 
-                Debug.WriteLine($"[+] Device connected to {port.PortName} at {port.BaudRate} baudrate");
+                DebugLogger.LogDebug($"[+] Device connected to {port.PortName} at {port.BaudRate} baudrate");
 
                 // enable button stream + disable echo
                 port.Write("km.buttons(1)\r\n");
@@ -411,7 +411,7 @@ namespace LoneEftDmaRadar.UI.Misc
             {
                 connected = false;
                 DeviceKind = KmDeviceKind.Unknown;
-                Debug.WriteLine($"[-] Device failed to connect. {ex}");
+                DebugLogger.LogDebug($"[-] Device failed to connect. {ex}");
             }
         }
 
@@ -437,7 +437,7 @@ namespace LoneEftDmaRadar.UI.Misc
 
             try
             {
-                Debug.WriteLine("[!] Closing port...");
+                DebugLogger.LogDebug("[!] Closing port...");
                 runReader = false;
 
                 // try to disable buttons to quiet stream
@@ -454,11 +454,11 @@ namespace LoneEftDmaRadar.UI.Misc
 
                 port.Close();
                 if (!port.IsOpen)
-                    Debug.WriteLine("[!] Port terminated successfully");
+                    DebugLogger.LogDebug("[!] Port terminated successfully");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[!] Port close error: {ex}");
+                DebugLogger.LogDebug($"[!] Port close error: {ex}");
             }
             finally
             {
@@ -476,13 +476,13 @@ namespace LoneEftDmaRadar.UI.Misc
                 if (port != null && !port.IsOpen)
                     port.Open();
 
-                Debug.WriteLine("[+] Reconnected to device.");
+                DebugLogger.LogDebug("[+] Reconnected to device.");
                 connected = port?.IsOpen == true;
             }
             catch (Exception ex)
             {
                 connected = false;
-                Debug.WriteLine($"[-] Reconnect failed: {ex}");
+                DebugLogger.LogDebug($"[-] Reconnect failed: {ex}");
             }
         }
 
@@ -502,13 +502,13 @@ namespace LoneEftDmaRadar.UI.Misc
 
             if (!ValidateMakcuSignature())
             {
-                Debug.WriteLine($"[-] {com}: not a Makcu (km.MAKCU signature missing).");
+                DebugLogger.LogDebug($"[-] {com}: not a Makcu (km.MAKCU signature missing).");
                 disconnect();
                 return false;
             }
 
             DeviceKind = KmDeviceKind.Makcu;
-            Debug.WriteLine($"[+] {com}: Makcu validated via km.MAKCU signature.");
+            DebugLogger.LogDebug($"[+] {com}: Makcu validated via km.MAKCU signature.");
             return true;
         }
 
@@ -553,7 +553,7 @@ namespace LoneEftDmaRadar.UI.Misc
                     port.Write("km.version()\r");
                     Thread.Sleep(100);
                     version = port.ReadLine();
-                    Debug.WriteLine($"[GenericKM] {com} km.version(): {version}");
+                    DebugLogger.LogDebug($"[GenericKM] {com} km.version(): {version}");
                 }
                 catch
                 {
@@ -569,7 +569,7 @@ namespace LoneEftDmaRadar.UI.Misc
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[GenericKM] Warning: km.buttons/km.echo failed on {com}: {ex}");
+                    DebugLogger.LogDebug($"[GenericKM] Warning: km.buttons/km.echo failed on {com}: {ex}");
                 }
 
                 start_listening();
@@ -581,14 +581,14 @@ namespace LoneEftDmaRadar.UI.Misc
                 connected = true;
                 DeviceKind = KmDeviceKind.Generic;
 
-                Debug.WriteLine($"[+] Generic KM device connected to {port.PortName} at {port.BaudRate} baudrate");
+                DebugLogger.LogDebug($"[+] Generic KM device connected to {port.PortName} at {port.BaudRate} baudrate");
                 return true;
             }
             catch (Exception ex)
             {
                 connected = false;
                 DeviceKind = KmDeviceKind.Unknown;
-                Debug.WriteLine($"[-] Generic KM device failed to connect on {com}. {ex}");
+                DebugLogger.LogDebug($"[-] Generic KM device failed to connect on {com}. {ex}");
                 try
                 {
                     if (port?.IsOpen == true)
@@ -748,7 +748,7 @@ namespace LoneEftDmaRadar.UI.Misc
         {
             await Task.Run(() =>
             {
-                Debug.WriteLine("[+] Listening to device.");
+                DebugLogger.LogDebug("[+] Listening to device.");
                 while (runReader)
                 {
                     if (!connected || port == null)

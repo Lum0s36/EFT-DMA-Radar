@@ -9,6 +9,7 @@ using LoneEftDmaRadar.Tarkov.GameWorld.Player;
 using LoneEftDmaRadar.Tarkov.Mono.Collections;
 using LoneEftDmaRadar.Tarkov.Unity;
 using LoneEftDmaRadar.Tarkov.Unity.Structures;
+using LoneEftDmaRadar.UI.Misc;
 using SkiaSharp;
 using System.Drawing;
 using System.Numerics;
@@ -39,28 +40,28 @@ public CameraManager()
 {
     try
     {
-        Debug.WriteLine("=== CameraManager Initialization ===");
-        Debug.WriteLine($"Unity Base: 0x{Memory.UnityBase:X}");
-        Debug.WriteLine($"AllCameras Offset: 0x{UnitySDK.UnityOffsets.AllCameras:X}");
+        DebugLogger.LogDebug("=== CameraManager Initialization ===");
+        DebugLogger.LogDebug($"Unity Base: 0x{Memory.UnityBase:X}");
+        DebugLogger.LogDebug($"AllCameras Offset: 0x{UnitySDK.UnityOffsets.AllCameras:X}");
 
         // Calculate AllCameras address
         var allCamerasAddr = Memory.UnityBase + UnitySDK.UnityOffsets.AllCameras;
-        Debug.WriteLine($"AllCameras Address: 0x{allCamerasAddr:X}");
+        DebugLogger.LogDebug($"AllCameras Address: 0x{allCamerasAddr:X}");
 
         // Read the AllCameras pointer
         var allCamerasPtr = Memory.ReadPtr(allCamerasAddr, false);
-        Debug.WriteLine($"AllCameras Ptr: 0x{allCamerasPtr:X}");
+        DebugLogger.LogDebug($"AllCameras Ptr: 0x{allCamerasPtr:X}");
 
         if (allCamerasPtr == 0)
         {
-            Debug.WriteLine("⚠️ CRITICAL: AllCameras pointer is NULL!");
-            Debug.WriteLine("This means the AllCameras offset is likely wrong.");
+            DebugLogger.LogDebug("⚠️ CRITICAL: AllCameras pointer is NULL!");
+            DebugLogger.LogDebug("This means the AllCameras offset is likely wrong.");
             throw new InvalidOperationException("AllCameras pointer is NULL - offset may be outdated");
         }
 
         if (allCamerasPtr > 0x7FFFFFFFFFFF)
         {
-            Debug.WriteLine($"⚠️ CRITICAL: AllCameras pointer is invalid: 0x{allCamerasPtr:X}");
+            DebugLogger.LogDebug($"⚠️ CRITICAL: AllCameras pointer is invalid: 0x{allCamerasPtr:X}");
             throw new InvalidOperationException($"Invalid AllCameras pointer: 0x{allCamerasPtr:X}");
         }
 
@@ -69,34 +70,34 @@ public CameraManager()
         var listItemsPtr = Memory.ReadPtr(allCamerasPtr + 0x0, false);
         var count = Memory.ReadValue<int>(allCamerasPtr + 0x8, false);
 
-        Debug.WriteLine($"\nList Structure:");
-        Debug.WriteLine($"  Items Pointer: 0x{listItemsPtr:X}");
-        Debug.WriteLine($"  Count: {count}");
+        DebugLogger.LogDebug($"\nList Structure:");
+        DebugLogger.LogDebug($"  Items Pointer: 0x{listItemsPtr:X}");
+        DebugLogger.LogDebug($"  Count: {count}");
 
         if (listItemsPtr == 0)
         {
-            Debug.WriteLine("⚠️ CRITICAL: List items pointer is NULL!");
+            DebugLogger.LogDebug("⚠️ CRITICAL: List items pointer is NULL!");
             throw new InvalidOperationException("Camera list items pointer is NULL");
         }
 
         if (count <= 0)
         {
-            Debug.WriteLine("⚠️ CRITICAL: Camera count is 0 or negative!");
-            Debug.WriteLine("This usually means you're not in a raid yet.");
+            DebugLogger.LogDebug("⚠️ CRITICAL: Camera count is 0 or negative!");
+            DebugLogger.LogDebug("This usually means you're not in a raid yet.");
             throw new InvalidOperationException($"No cameras in list (count: {count})");
         }
 
         if (count > 100)
         {
-            Debug.WriteLine($"⚠️ WARNING: Camera count seems high: {count}");
-            Debug.WriteLine("This might indicate memory corruption or wrong structure.");
+            DebugLogger.LogDebug($"⚠️ WARNING: Camera count seems high: {count}");
+            DebugLogger.LogDebug("This might indicate memory corruption or wrong structure.");
         }
 
         var (fps, optic) = FindCamerasByName(listItemsPtr, count);
 
         if (fps == 0 || optic == 0)
         {
-            Debug.WriteLine("\n⚠️ CRITICAL: Could not find required cameras!");
+            DebugLogger.LogDebug("\n⚠️ CRITICAL: Could not find required cameras!");
             throw new InvalidOperationException(
                 $"Could not find cameras. FPS: {(fps != 0 ? "Found" : "Missing")}, " +
                 $"Optic: {(optic != 0 ? "Found" : "Missing")}");
@@ -105,7 +106,7 @@ public CameraManager()
         FPSCamera = fps;
         OpticCamera = optic;
 
-        Debug.WriteLine("\n=== Getting Matrix Addresses ===");
+        DebugLogger.LogDebug("\n=== Getting Matrix Addresses ===");
         _fpsMatrixAddress = GetMatrixAddress(FPSCamera);
         _opticMatrixAddress = GetMatrixAddress(OpticCamera);
 
@@ -113,22 +114,22 @@ public CameraManager()
         OpticCameraPtr = optic;
         ActiveCameraPtr = 0;
 
-        Debug.WriteLine($"\n✓ FPS Camera: 0x{FPSCamera:X}");
-        Debug.WriteLine($"  GameObject: 0x{Memory.ReadPtr(FPSCamera + 0x50, false):X}");
-        Debug.WriteLine($"  Matrix Address: 0x{_fpsMatrixAddress:X}");
+        DebugLogger.LogDebug($"\n✓ FPS Camera: 0x{FPSCamera:X}");
+        DebugLogger.LogDebug($"  GameObject: 0x{Memory.ReadPtr(FPSCamera + 0x50, false):X}");
+        DebugLogger.LogDebug($"  Matrix Address: 0x{_fpsMatrixAddress:X}");
         
-        Debug.WriteLine($"✓ Optic Camera: 0x{OpticCamera:X}");
-        Debug.WriteLine($"  GameObject: 0x{Memory.ReadPtr(OpticCamera + 0x50, false):X}");
-        Debug.WriteLine($"  Matrix Address: 0x{_opticMatrixAddress:X}");
+        DebugLogger.LogDebug($"✓ Optic Camera: 0x{OpticCamera:X}");
+        DebugLogger.LogDebug($"  GameObject: 0x{Memory.ReadPtr(OpticCamera + 0x50, false):X}");
+        DebugLogger.LogDebug($"  Matrix Address: 0x{_opticMatrixAddress:X}");
 
         VerifyViewMatrix(_fpsMatrixAddress, "FPS");
         VerifyViewMatrix(_opticMatrixAddress, "Optic");
 
-        Debug.WriteLine("=== CameraManager Initialization Complete ===\n");
+        DebugLogger.LogDebug("=== CameraManager Initialization Complete ===\n");
     }
     catch (Exception ex)
     {
-        Debug.WriteLine($"⚠️ CameraManager initialization failed: {ex}");
+        DebugLogger.LogDebug($"⚠️ CameraManager initialization failed: {ex}");
         throw;
     }
 }
@@ -157,7 +158,7 @@ public CameraManager()
         {
             try
             {
-                Debug.WriteLine($"\n{name} Matrix @ 0x{matrixAddress:X}:");
+                DebugLogger.LogDebug($"\n{name} Matrix @ 0x{matrixAddress:X}:");
 
                 // Read ViewMatrix at +0x118
                 var vm = Memory.ReadValue<Matrix4x4>(matrixAddress + 0x118, false);
@@ -167,23 +168,23 @@ public CameraManager()
                 float upMag = MathF.Sqrt(vm.M21 * vm.M21 + vm.M22 * vm.M22 + vm.M23 * vm.M23);
                 float fwdMag = MathF.Sqrt(vm.M31 * vm.M31 + vm.M32 * vm.M32 + vm.M33 * vm.M33);
 
-                Debug.WriteLine($"  M44: {vm.M44:F6}");
-                Debug.WriteLine($"  Translation: ({vm.M41:F2}, {vm.M42:F2}, {vm.M43:F2})");
-                Debug.WriteLine($"  Right mag: {rightMag:F4}, Up mag: {upMag:F4}, Fwd mag: {fwdMag:F4}");
-                Debug.WriteLine($"  Right: ({vm.M11:F3}, {vm.M12:F3}, {vm.M13:F3})");
-                Debug.WriteLine($"  Up: ({vm.M21:F3}, {vm.M22:F3}, {vm.M23:F3})");
-                Debug.WriteLine($"  Forward: ({vm.M31:F3}, {vm.M32:F3}, {vm.M33:F3})");
+                DebugLogger.LogDebug($"  M44: {vm.M44:F6}");
+                DebugLogger.LogDebug($"  Translation: ({vm.M41:F2}, {vm.M42:F2}, {vm.M43:F2})");
+                DebugLogger.LogDebug($"  Right mag: {rightMag:F4}, Up mag: {upMag:F4}, Fwd mag: {fwdMag:F4}");
+                DebugLogger.LogDebug($"  Right: ({vm.M11:F3}, {vm.M12:F3}, {vm.M13:F3})");
+                DebugLogger.LogDebug($"  Up: ({vm.M21:F3}, {vm.M22:F3}, {vm.M23:F3})");
+                DebugLogger.LogDebug($"  Forward: ({vm.M31:F3}, {vm.M32:F3}, {vm.M33:F3})");
 
                 bool isValid = rightMag > 0.9f && rightMag < 1.1f &&
                                upMag > 0.9f && upMag < 1.1f &&
                                fwdMag > 0.9f && fwdMag < 1.1f &&
                                Math.Abs(vm.M44 - 1.0f) < 0.1f;
 
-                Debug.WriteLine($"  ✓ Valid: {isValid}");
+                DebugLogger.LogDebug($"  ✓ Valid: {isValid}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ERROR verifying ViewMatrix for {name}: {ex}");
+                DebugLogger.LogDebug($"ERROR verifying ViewMatrix for {name}: {ex}");
             }
         }
 
@@ -192,10 +193,10 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
     ulong fpsCamera = 0;
     ulong opticCamera = 0;
 
-    Debug.WriteLine($"\n=== Searching for Cameras ===");
-    Debug.WriteLine($"List Items Ptr: 0x{listItemsPtr:X}");
-    Debug.WriteLine($"Camera Count: {count}");
-    Debug.WriteLine($"Scanning cameras...\n");
+    DebugLogger.LogDebug($"\n=== Searching for Cameras ===");
+    DebugLogger.LogDebug($"List Items Ptr: 0x{listItemsPtr:X}");
+    DebugLogger.LogDebug($"Camera Count: {count}");
+    DebugLogger.LogDebug($"Scanning cameras...\n");
 
     for (int i = 0; i < Math.Min(count, 100); i++)
     {
@@ -207,7 +208,7 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             
             if (cameraPtr == 0 || cameraPtr > 0x7FFFFFFFFFFF)
             {
-                Debug.WriteLine($"  [{i:D2}] Invalid camera pointer: 0x{cameraPtr:X}");
+                DebugLogger.LogDebug($"  [{i:D2}] Invalid camera pointer: 0x{cameraPtr:X}");
                 continue;
             }
 
@@ -215,7 +216,7 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             var gameObjectPtr = Memory.ReadPtr(cameraPtr + 0x50, false);
             if (gameObjectPtr == 0 || gameObjectPtr > 0x7FFFFFFFFFFF)
             {
-                Debug.WriteLine($"  [{i:D2}] Camera 0x{cameraPtr:X} -> Invalid GameObject: 0x{gameObjectPtr:X}");
+                DebugLogger.LogDebug($"  [{i:D2}] Camera 0x{cameraPtr:X} -> Invalid GameObject: 0x{gameObjectPtr:X}");
                 continue;
             }
 
@@ -223,7 +224,7 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             var namePtr = Memory.ReadPtr(gameObjectPtr + UnitySDK.UnityOffsets.GameObject_NameOffset, false);
             if (namePtr == 0 || namePtr > 0x7FFFFFFFFFFF)
             {
-                Debug.WriteLine($"  [{i:D2}] GameObject 0x{gameObjectPtr:X} -> Invalid name ptr: 0x{namePtr:X}");
+                DebugLogger.LogDebug($"  [{i:D2}] GameObject 0x{gameObjectPtr:X} -> Invalid name ptr: 0x{namePtr:X}");
                 continue;
             }
 
@@ -231,13 +232,13 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             var name = Memory.ReadUtf8String(namePtr, 64, false);
             if (string.IsNullOrEmpty(name) || name.Length < 3)
             {
-                Debug.WriteLine($"  [{i:D2}] Name pointer 0x{namePtr:X} -> Invalid/empty name");
+                DebugLogger.LogDebug($"  [{i:D2}] Name pointer 0x{namePtr:X} -> Invalid/empty name");
                 continue;
             }
 
-            Debug.WriteLine($"  [{i:D2}] Camera: '{name}'");
-            Debug.WriteLine($"       @ 0x{cameraPtr:X}");
-            Debug.WriteLine($"       GameObject: 0x{gameObjectPtr:X}");
+            DebugLogger.LogDebug($"  [{i:D2}] Camera: '{name}'");
+            DebugLogger.LogDebug($"       @ 0x{cameraPtr:X}");
+            DebugLogger.LogDebug($"       GameObject: 0x{gameObjectPtr:X}");
 
             // Check for FPS Camera
             bool isFPS = name.Contains("FPS", StringComparison.OrdinalIgnoreCase) &&
@@ -251,30 +252,30 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             if (isFPS)
             {
                 fpsCamera = cameraPtr;
-                Debug.WriteLine($"       ✓✓✓ MATCHED AS FPS CAMERA ✓✓✓");
+                DebugLogger.LogDebug($"       ✓✓✓ MATCHED AS FPS CAMERA ✓✓✓");
             }
             
             if (isOptic)
             {
                 opticCamera = cameraPtr;
-                Debug.WriteLine($"       ✓✓✓ MATCHED AS OPTIC CAMERA ✓✓✓");
+                DebugLogger.LogDebug($"       ✓✓✓ MATCHED AS OPTIC CAMERA ✓✓✓");
             }
 
             if (fpsCamera != 0 && opticCamera != 0)
             {
-                Debug.WriteLine($"\n✓ Both cameras found! Stopping search at index {i}.");
+                DebugLogger.LogDebug($"\n✓ Both cameras found! Stopping search at index {i}.");
                 break;
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"  [{i:D2}] Exception: {ex.Message}");
+            DebugLogger.LogDebug($"  [{i:D2}] Exception: {ex.Message}");
         }
     }
 
-    Debug.WriteLine($"\n=== Search Results ===");
-    Debug.WriteLine($"  FPS Camera:   {(fpsCamera != 0 ? $"✓ Found @ 0x{fpsCamera:X}" : "✗ NOT FOUND")}");
-    Debug.WriteLine($"  Optic Camera: {(opticCamera != 0 ? $"✓ Found @ 0x{opticCamera:X}" : "✗ NOT FOUND")}");
+    DebugLogger.LogDebug($"\n=== Search Results ===");
+    DebugLogger.LogDebug($"  FPS Camera:   {(fpsCamera != 0 ? $"✓ Found @ 0x{fpsCamera:X}" : "✗ NOT FOUND")}");
+    DebugLogger.LogDebug($"  Optic Camera: {(opticCamera != 0 ? $"✓ Found @ 0x{opticCamera:X}" : "✗ NOT FOUND")}");
 
     return (fpsCamera, opticCamera);
 }
@@ -313,7 +314,7 @@ private static (ulong fpsCamera, ulong opticCamera) FindCamerasByName(ulong list
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"CheckIfScoped() ERROR: {ex}");
+                DebugLogger.LogDebug($"CheckIfScoped() ERROR: {ex}");
                 return false;
             }
         }
@@ -359,13 +360,13 @@ public void OnRealtimeLoop(VmmScatter scatter, LocalPlayer localPlayer)
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ERROR in CameraManager scatter callback: {ex}");
+                DebugLogger.LogDebug($"ERROR in CameraManager scatter callback: {ex}");
             }
         };
     }
     catch (Exception ex)
     {
-        Debug.WriteLine($"ERROR in CameraManager OnRealtimeLoop: {ex}");
+        DebugLogger.LogDebug($"ERROR in CameraManager OnRealtimeLoop: {ex}");
     }
 }
 
@@ -412,7 +413,7 @@ public static float ZoomLevel => _zoomLevel;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"ERROR in GetZoomLevel: {ex}");
+                    DebugLogger.LogDebug($"ERROR in GetZoomLevel: {ex}");
                     return -1.0f;
                 }
             }
@@ -462,7 +463,7 @@ public static void UpdateViewportRes()
         }
         
         Viewport = new Rectangle(0, 0, width, height);
-        Debug.WriteLine($"[CameraManager] Viewport updated to {width}x{height}");
+        DebugLogger.LogDebug($"[CameraManager] Viewport updated to {width}x{height}");
     }
 }
 
@@ -522,7 +523,7 @@ public static bool WorldToScreen(
     }
     catch (Exception ex)
     {
-        Debug.WriteLine($"ERROR in WorldToScreen: {ex}");
+        DebugLogger.LogDebug($"ERROR in WorldToScreen: {ex}");
         scrPos = default;
         return false;
     }

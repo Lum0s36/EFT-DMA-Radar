@@ -119,6 +119,10 @@
                               Margin="0,0,12,0" />
                     <CheckBox Content="Show Backpacks"
                               IsChecked="{Binding ShowBackpacks}"
+                              Foreground="White"
+                              Margin="0,0,12,0" />
+                    <CheckBox Content="Show Quest Items"
+                              IsChecked="{Binding ShowQuestItems}"
                               Foreground="White" />
                 </WrapPanel>
 

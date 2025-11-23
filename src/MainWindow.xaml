@@ -27,19 +27,19 @@
 
             <TabItem Header="Settings" Margin="0,-1,0,1">
                 <TabControl Margin="4">
-                    <TabItem Header="General">
+                    <TabItem Header="General" Height="34" Margin="0,-1,16,0" VerticalAlignment="Top">
                         <tabs:SettingsTab x:Name="Settings" />
                     </TabItem>
-                    <TabItem Header="ESP Fuser">
+                    <TabItem Header="ESP Fuser" Height="34" Margin="0,-1,16,0" VerticalAlignment="Top">
                         <tabs:EspSettingsTab x:Name="EspSettings" />
                     </TabItem>
-                    <TabItem Header="Loot Filters">
+                    <TabItem Header="Loot Filters" Height="34" Margin="0,-1,16,0" VerticalAlignment="Top">
                         <tabs:LootFiltersTab x:Name="LootFilters"/>
                     </TabItem>
-                    <TabItem Header="Makcu Aimbot">
+                    <TabItem Header="Makcu Aimbot" Height="34" Margin="0,-1,16,0" VerticalAlignment="Top">
                         <tabs:MakcuTab x:Name="Makcu" />
                     </TabItem>
-                    <TabItem Header="MemWrites" Width="117">
+                    <TabItem Header="MemWrites" Width="117" Height="34" Margin="0,-1,0,0" VerticalAlignment="Top">
                         <tabs:MemWritesTab x:Name="MemWrites" />
                     </TabItem>
                 </TabControl>

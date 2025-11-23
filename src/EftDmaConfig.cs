@@ -667,6 +667,12 @@ namespace LoneEftDmaRadar
         public bool EspLoot { get; set; } = true;
 
         /// <summary>
+        /// Show quest items on ESP.
+        /// </summary>
+        [JsonPropertyName("espQuestLoot")]
+        public bool EspQuestLoot { get; set; } = true;
+
+        /// <summary>
         /// Show Loot Prices on ESP.
         /// </summary>
         [JsonPropertyName("espLootPrice")]
@@ -849,6 +855,12 @@ namespace LoneEftDmaRadar
         /// </summary>
         [JsonPropertyName("enabled")]
         public bool Enabled { get; set; } = true;
+
+        /// <summary>
+        /// Show quest items on map/ESP.
+        /// </summary>
+        [JsonPropertyName("showQuestItems")]
+        public bool ShowQuestItems { get; set; } = true;
 
         /// <summary>
         /// Shows bodies/corpses on map.
