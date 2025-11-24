@@ -49,6 +49,14 @@ namespace LoneEftDmaRadar.UI.Misc
             }
         }
 
+        /// <summary>
+        /// Synchronous convenience wrapper for callers that are not async.
+        /// </summary>
+        public static bool Connect(string ip, int port, string macHex, int timeoutMs = 3000)
+        {
+            return ConnectAsync(ip, port, macHex, timeoutMs).GetAwaiter().GetResult();
+        }
+
         public static void Disconnect()
         {
             lock (_lock)
