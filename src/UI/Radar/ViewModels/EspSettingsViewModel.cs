@@ -528,6 +528,12 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             set { App.Config.UI.EspColorAI = value; OnPropertyChanged(); }
         }
 
+        public string EspColorPlayerScavs
+        {
+            get => App.Config.UI.EspColorPlayerScavs;
+            set { App.Config.UI.EspColorPlayerScavs = value; OnPropertyChanged(); }
+        }
+
         public string EspColorRaiders
         {
             get => App.Config.UI.EspColorRaiders;

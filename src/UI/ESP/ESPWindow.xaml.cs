@@ -986,6 +986,12 @@ namespace LoneEftDmaRadar.UI.ESP
                 return ToColor(ColorFromHex(aiHex));
             }
 
+            // Handle Player Scavs specifically.
+            if (player.Type == PlayerType.PScav)
+            {
+                return ToColor(ColorFromHex(cfg.EspColorPlayerScavs));
+            }
+
             // Fallback to user-configured player colours.
             return ToColor(ColorFromHex(cfg.EspColorPlayers));
         }

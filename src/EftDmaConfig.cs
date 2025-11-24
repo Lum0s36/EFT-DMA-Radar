@@ -783,6 +783,12 @@ namespace LoneEftDmaRadar
         [JsonPropertyName("espColorAI")]
         public string EspColorAI { get; set; } = "#FFFFA500";
 
+        /// <summary>
+        /// ESP color for player-controlled scavs (PScavs).
+        /// </summary>
+        [JsonPropertyName("espColorPlayerScavs")]
+        public string EspColorPlayerScavs { get; set; } = "#FFFFFFFF";
+
         [JsonPropertyName("espColorRaiders")]
         public string EspColorRaiders { get; set; } = "#FFFFC70F";
 
