@@ -7,8 +7,7 @@
              mc:Ignorable="d"
              Padding="10"
              PreviewKeyDown="OnPreviewKeyDown"
-             Focusable="True"
-             Background="#FF1E1E1E">
+             Focusable="True">
     <UserControl.Resources>
         <vm:BooleanToBrushConverter x:Key="BooleanToBrushConverter">
             <vm:BooleanToBrushConverter.TrueBrush>
@@ -19,14 +18,14 @@
             </vm:BooleanToBrushConverter.FalseBrush>
         </vm:BooleanToBrushConverter>
 
-        <!-- Dark Theme Colors -->
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#FF1E1E1E"/>
-        <SolidColorBrush x:Key="HoverBrush" Color="#FF2D2D30"/>
+        <!-- Dark Theme Colors - aligned with App.xaml theme -->
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#0F1115"/>
+        <SolidColorBrush x:Key="HoverBrush" Color="#222730"/>
         <SolidColorBrush x:Key="ListeningBrush" Color="#1A4D6F"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#3F3F46"/>
-        <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="SubtleBrush" Color="#999999"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#0078D7"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#22252D"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#E6E9EF"/>
+        <SolidColorBrush x:Key="SubtleBrush" Color="#9AA3B5"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#4DA3FF"/>
     </UserControl.Resources>
 
     <d:UserControl.DataContext>
