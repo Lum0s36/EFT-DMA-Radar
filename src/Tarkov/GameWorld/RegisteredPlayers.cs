@@ -70,12 +70,24 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld
             {
                 using var playersList = UnityList<ulong>.Create(this, false); // Realtime Read
                 using var registered = playersList.Where(x => x != 0x0).ToPooledSet();
-                /// Allocate New Players
+                /// Allocate New Players & Re-allocate Erroring Players
                 foreach (var playerBase in registered)
                 {
                     if (playerBase == LocalPlayer) // Skip LocalPlayer, already allocated
                         continue;
-                    // Add new player
+
+                    // Check if existing player is in error state for too long
+                    if (_players.TryGetValue(playerBase, out var existingPlayer))
+                    {
+                        if (existingPlayer.ErrorTimer.ElapsedMilliseconds >= 1500)
+                        {
+                            DebugLogger.LogDebug($"WARNING - Existing player '{existingPlayer.Name}' being re-allocated due to excessive errors (>1500ms)...");
+                            AbstractPlayer.Allocate(_players, playerBase); // Re-allocate replaces existing entry
+                            continue;
+                        }
+                    }
+
+                    // Add new player (or keep existing if no errors)
                     AbstractPlayer.Allocate(_players, playerBase);
                 }
                 /// Update Existing Players incl LocalPlayer

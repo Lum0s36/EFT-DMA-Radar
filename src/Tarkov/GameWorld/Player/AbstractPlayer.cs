@@ -224,11 +224,18 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Player
         public PlayerSkeleton Skeleton { get; protected set; }
         protected int _verticesCount;
         private bool _skeletonErrorLogged;
+        private Vector3 _cachedPosition; // Fallback position cache
 
         /// <summary>
         /// TRUE if critical memory reads (position/rotation) have failed.
         /// </summary>
         public bool IsError { get; set; }
+
+        /// <summary>
+        /// Timer to track how long player has been in error state.
+        /// Used to trigger re-allocation if errors persist.
+        /// </summary>
+        public Stopwatch ErrorTimer { get; } = new Stopwatch();
 
         /// <summary>
         /// True if player is being focused via Right-Click (UI).
@@ -537,6 +544,8 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Player
                                         bone.UpdatePosition(vertices.Span);
                                     }
                                     _skeletonErrorLogged = false;
+                                    // Update cached position for fallback
+                                    _cachedPosition = newPos;
                                 }
                             }
                             catch (ArgumentOutOfRangeException ex)
@@ -576,7 +585,22 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Player
                     }
                 }
 
-                IsError = !successRot || !successPos;
+                bool hasError = !successRot || !successPos;
+
+                // Track error state with timer
+                if (hasError && !IsError)
+                {
+                    // Error just started
+                    ErrorTimer.Restart();
+                }
+                else if (!hasError && IsError)
+                {
+                    // Error cleared
+                    ErrorTimer.Stop();
+                    ErrorTimer.Reset();
+                }
+
+                IsError = hasError;
             };
         }
 
@@ -808,7 +832,17 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Player
 
         #region Interfaces
 
-        public virtual ref readonly Vector3 Position => ref SkeletonRoot.Position;
+        public virtual Vector3 Position
+        {
+            get
+            {
+                var skeletonPos = SkeletonRoot.Position;
+                // Use skeleton position if valid, otherwise fall back to cached position
+                if (skeletonPos != Vector3.Zero && !float.IsNaN(skeletonPos.X) && !float.IsInfinity(skeletonPos.X))
+                    return skeletonPos;
+                return _cachedPosition;
+            }
+        }
         public Vector2 MouseoverPosition { get; set; }
 
         public void Draw(SKCanvas canvas, EftMapParams mapParams, LocalPlayer localPlayer)
