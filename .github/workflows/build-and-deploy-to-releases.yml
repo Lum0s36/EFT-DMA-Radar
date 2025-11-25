@@ -43,6 +43,7 @@ jobs:
         run: dotnet tool install -g vpk
 
       - name: Dotnet Publish
+        shell: pwsh
         run: |
           dotnet publish src/Lone-EFT-DMA-Radar.csproj `
             -c Release `
@@ -56,6 +57,7 @@ jobs:
             -o out
 
       - name: Download previous release data
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -64,23 +66,33 @@ jobs:
             --token "$env:GITHUB_TOKEN"
 
       - name: Pack with Velopack
+        shell: pwsh
         run: |
+          $ver = "${{ steps.nbgv.outputs.SemVer2 }}"
+          if ($ver -like "0.0.0*") {
+            $ver = "0.0.1"
+          }
           vpk pack `
             --packId github.lumos36.eft `
-            --packVersion "${{ steps.nbgv.outputs.SemVer2 }}" `
+            --packVersion "$ver" `
             --packDir "out" `
             --mainExe "Lone-EFT-DMA-Radar.exe" `
             --packTitle "Lone EFT DMA Radar" `
             --icon "Resources/lone-icon.ico"
 
       - name: Upload to GitHub Releases
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          $ver = "${{ steps.nbgv.outputs.SemVer2 }}"
+          if ($ver -like "0.0.0*") {
+            $ver = "0.0.1"
+          }
           vpk upload github `
             --repoUrl "https://github.com/${{ github.repository }}" `
             --publish `
-            --releaseName "EFT ${{ steps.nbgv.outputs.SemVer2 }}" `
-            --tag "v${{ steps.nbgv.outputs.SemVer2 }}" `
+            --releaseName "EFT $ver" `
+            --tag "v$ver" `
             --targetCommitish "${{ github.sha }}" `
             --token "$env:GITHUB_TOKEN"
