@@ -164,6 +164,10 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld
                 {
                     throw;
                 }
+                catch (Exception ex) when (ex.InnerException?.Message?.Contains("GameWorld not found") == true)
+                {
+                    // Expected when not in raid - silently continue polling
+                }
                 catch (Exception ex)
                 {
                     DebugLogger.LogDebug($"ERROR Instantiating Game Instance: {ex}");

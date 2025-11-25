@@ -30,7 +30,7 @@ using Collections.Pooled;
 using LoneEftDmaRadar.Common.DMA;
 using LoneEftDmaRadar.Misc;
 using LoneEftDmaRadar.Tarkov.GameWorld;
-using CameraManagerNew = LoneEftDmaRadar.Tarkov.GameWorld.Camera.CameraManager;
+using LoneEftDmaRadar.Tarkov.GameWorld.Camera;
 using LoneEftDmaRadar.Tarkov.GameWorld.Exits;
 using LoneEftDmaRadar.Tarkov.GameWorld.Explosives;
 using LoneEftDmaRadar.Tarkov.GameWorld.Loot.Helpers;
@@ -91,7 +91,7 @@ namespace LoneEftDmaRadar.DMA
         public bool Starting { get; private set; }
         public bool Ready { get; private set; }
         public bool InRaid => Game?.InRaid ?? false;
-        public static CameraManagerNew CameraManager { get; internal set; }
+        public static CameraManager CameraManager { get; internal set; }
 
         public IReadOnlyCollection<AbstractPlayer> Players => Game?.Players;
         public IReadOnlyCollection<IExplosiveItem> Explosives => Game?.Explosives;
@@ -285,8 +285,8 @@ namespace LoneEftDmaRadar.DMA
                             {
                                 try
                                 {
-                                    CameraManager = new CameraManagerNew();
-                                    CameraManagerNew.UpdateViewportRes();
+                                    CameraManager = new CameraManager();
+                                    CameraManager.UpdateViewportRes();
                                     DebugLogger.LogDebug("[MemDMA] CameraManager initialized for raid");
                                     cameraInitStart = DateTime.UtcNow;
                                 }
@@ -304,7 +304,7 @@ namespace LoneEftDmaRadar.DMA
                                 if (DateTime.UtcNow - cameraInitStart > cameraInitTimeout)
                                 {
                                     DebugLogger.LogDebug("[MemDMA] CameraManager still not initialized, retrying...");
-                                    CameraManagerNew.Reset();
+                                    CameraManager.Reset();
                                     CameraManager = null;
                                     nextCameraAttempt = DateTime.UtcNow.Add(retryInterval);
                                 }
@@ -333,7 +333,7 @@ namespace LoneEftDmaRadar.DMA
                 finally
                 {
                     OnRaidStopped();
-                    CameraManagerNew.Reset();
+                    CameraManager.Reset();
                     CameraManager = null;
                     Thread.Sleep(100);
                 }

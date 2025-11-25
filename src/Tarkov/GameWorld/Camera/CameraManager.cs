@@ -21,6 +21,8 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
 {
     public sealed class CameraManager
     {
+        private const int VIEWPORT_TOLERANCE = 800;
+
         static CameraManager()
         {
             MemDMA.ProcessStarting += MemDMA_ProcessStarting;
@@ -34,14 +36,118 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
         public static ulong OpticCameraPtr { get; private set; }
         public static ulong ActiveCameraPtr { get; private set; }
 
+        private static readonly Lock _viewportSync = new();
+        public static Rectangle Viewport { get; private set; }
+        public static SKPoint ViewportCenter => new SKPoint(Viewport.Width / 2f, Viewport.Height / 2f);
+        public static bool IsScoped { get; private set; }
+        public static bool IsADS { get; private set; }
+        public static bool IsInitialized { get; private set; } = false;
+        private static float _fov;
+        private static float _aspect;
+        private static readonly ViewMatrix _viewMatrix = new();
+        public static Vector3 CameraPosition => new(_viewMatrix.M14, _viewMatrix.M24, _viewMatrix.Translation.Z);
+    
+        public static void Reset()
+        {
+            var identity = Matrix4x4.Identity;
+            _viewMatrix.Update(ref identity);
+            Viewport = new Rectangle();
+            ActiveCameraPtr = 0;
+            _fov = 0f;
+            _aspect = 0f;
+            IsInitialized = false;
+        }
         public ulong FPSCamera { get; }
         public ulong OpticCamera { get; }
         private ulong _fpsMatrixAddress;
         private ulong _opticMatrixAddress;
         private bool OpticCameraActive => Memory.ReadValue<bool>(OpticCamera + UnitySDK.UnityOffsets.MonoBehaviour_IsAddedOffset, false);
 
+        public static void UpdateViewportRes()
+        {
+            lock (_viewportSync)
+            {
+                var width = App.Config.UI.EspScreenWidth > 0
+                    ? App.Config.UI.EspScreenWidth
+                    : (int)App.Config.UI.Resolution.Width;
+                var height = App.Config.UI.EspScreenHeight > 0
+                    ? App.Config.UI.EspScreenHeight
+                    : (int)App.Config.UI.Resolution.Height;
+                
+                if (width <= 0 || height <= 0)
+                {
+                    width = 1920;
+                    height = 1080;
+                }
+                
+                Viewport = new Rectangle(0, 0, width, height);
+                DebugLogger.LogDebug($"[CameraManager] Viewport updated to {width}x{height}");
+            }
+        }
+
+        public static bool WorldToScreen( ref readonly Vector3 worldPos, out SKPoint scrPos, bool onScreenCheck = false, bool useTolerance = false) 
+        {
+            try
+            {
+                float w = Vector3.Dot(_viewMatrix.Translation, worldPos) + _viewMatrix.M44;
+
+                if (w < 0.098f)
+                {
+                    scrPos = default;
+                    return false;
+                }
+
+                float x = Vector3.Dot(_viewMatrix.Right, worldPos) + _viewMatrix.M14;
+                float y = Vector3.Dot(_viewMatrix.Up, worldPos) + _viewMatrix.M24;
+
+                // ✅ FIX: Only use FOV-based calculation when scoped, ignore zoom level
+                if (IsScoped)
+                {
+                    float angleRadHalf = (MathF.PI / 180f) * _fov * 0.5f;
+                    float angleCtg = MathF.Cos(angleRadHalf) / MathF.Sin(angleRadHalf);
+
+                    x /= angleCtg * _aspect * 0.5f;
+                    y /= angleCtg * 0.5f;
+                    
+                    // DON'T multiply by _zoomLevel - FOV already handles zoom!
+                }
+
+                var center = ViewportCenter;
+                scrPos = new()
+                {
+                    X = center.X * (1f + x / w),
+                    Y = center.Y * (1f - y / w)
+                };
+
+                if (onScreenCheck)
+                {
+                    int left = useTolerance ? Viewport.Left - VIEWPORT_TOLERANCE : Viewport.Left;
+                    int right = useTolerance ? Viewport.Right + VIEWPORT_TOLERANCE : Viewport.Right;
+                    int top = useTolerance ? Viewport.Top - VIEWPORT_TOLERANCE : Viewport.Top;
+                    int bottom = useTolerance ? Viewport.Bottom + VIEWPORT_TOLERANCE : Viewport.Bottom;
+
+                    if (scrPos.X < left || scrPos.X > right || scrPos.Y < top || scrPos.Y > bottom)
+                    {
+                        scrPos = default;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.LogDebug($"ERROR in WorldToScreen: {ex}");
+                scrPos = default;
+                return false;
+            }
+        }
+
         public CameraManager()
         {
+            if (IsInitialized)
+                return;
+
             try
             {
                 DebugLogger.LogDebug("=== CameraManager Initialization ===");
@@ -120,6 +226,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
                 VerifyViewMatrix(_fpsMatrixAddress, "FPS");
                 VerifyViewMatrix(_opticMatrixAddress, "Optic");
 
+                IsInitialized = true;
                 DebugLogger.LogDebug("=== CameraManager Initialization Complete ===\n");
             }
             catch (Exception ex)
@@ -278,7 +385,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
 
                     return sightComponent.GetZoomLevel() > 1f;
                 }
-
                 return false;
             }
             catch (Exception ex)
@@ -312,7 +418,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
                         if (s.ReadValue<Matrix4x4>(activeMatrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset, out var vm))
                         {
                             _viewMatrix.Update(ref vm);
-                            _lastMatrixUpdate = DateTime.UtcNow;
                         }
 
                         if (s.ReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_FOVOffset, out var fov))
@@ -391,127 +496,12 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
 
         #endregion
 
-        #region Static Interfaces
 
-        private const int VIEWPORT_TOLERANCE = 800;
-        private static readonly Lock _viewportSync = new();
-
-        public static bool EspRunning { get; set; }
-        public static Rectangle Viewport { get; private set; }
-        public static SKPoint ViewportCenter => new SKPoint(Viewport.Width / 2f, Viewport.Height / 2f);
-        public static bool IsScoped { get; private set; }
-        public static bool IsADS { get; private set; }
-
-        private static float _fov;
-        private static float _aspect;
-        private static readonly ViewMatrix _viewMatrix = new();
-        public static Vector3 CameraPosition => new(_viewMatrix.M14, _viewMatrix.M24, _viewMatrix.Translation.Z);
-        private static DateTime _lastMatrixUpdate = DateTime.MinValue;
-
-        public static void Reset()
-        {
-            var identity = Matrix4x4.Identity;
-            _viewMatrix.Update(ref identity);
-            Viewport = new Rectangle();
-            ActiveCameraPtr = 0;
-            EspRunning = false;
-            _fov = 0f;
-            _aspect = 0f;
-            _lastMatrixUpdate = DateTime.MinValue;
-        }
-
-        // Indicates if we have a recent, valid matrix update
-        public bool IsInitialized => _lastMatrixUpdate != DateTime.MinValue &&
-                                     (DateTime.UtcNow - _lastMatrixUpdate).TotalSeconds < 5.0;
-
-        public static void UpdateViewportRes()
-        {
-            lock (_viewportSync)
-            {
-                // Prefer explicit ESP window override so the overlay can run on a different resolution/monitor.
-                // Falls back to the generic UI resolution, then to primary monitor.
-                var width = App.Config.UI.EspScreenWidth > 0
-                    ? App.Config.UI.EspScreenWidth
-                    : (int)App.Config.UI.Resolution.Width;
-                var height = App.Config.UI.EspScreenHeight > 0
-                    ? App.Config.UI.EspScreenHeight
-                    : (int)App.Config.UI.Resolution.Height;
-                
-                // Fallback to 1080p if invalid
-                if (width <= 0 || height <= 0)
-                {
-                    width = 1920;
-                    height = 1080;
-                }
-                
-                Viewport = new Rectangle(0, 0, width, height);
-                DebugLogger.LogDebug($"[CameraManager] Viewport updated to {width}x{height}");
-            }
-        }
-
-        public static bool WorldToScreen( ref readonly Vector3 worldPos, out SKPoint scrPos, bool onScreenCheck = false, bool useTolerance = false) 
-        {
-            try
-            {
-                float w = Vector3.Dot(_viewMatrix.Translation, worldPos) + _viewMatrix.M44;
-
-                if (w < 0.098f)
-                {
-                    scrPos = default;
-                    return false;
-                }
-
-                float x = Vector3.Dot(_viewMatrix.Right, worldPos) + _viewMatrix.M14;
-                float y = Vector3.Dot(_viewMatrix.Up, worldPos) + _viewMatrix.M24;
-
-                // ✅ FIX: Only use FOV-based calculation when scoped, ignore zoom level
-                if (IsScoped)
-                {
-                    float angleRadHalf = (MathF.PI / 180f) * _fov * 0.5f;
-                    float angleCtg = MathF.Cos(angleRadHalf) / MathF.Sin(angleRadHalf);
-
-                    x /= angleCtg * _aspect * 0.5f;
-                    y /= angleCtg * 0.5f;
-                    
-                    // DON'T multiply by _zoomLevel - FOV already handles zoom!
-                }
-
-                var center = ViewportCenter;
-                scrPos = new()
-                {
-                    X = center.X * (1f + x / w),
-                    Y = center.Y * (1f - y / w)
-                };
-
-                if (onScreenCheck)
-                {
-                    int left = useTolerance ? Viewport.Left - VIEWPORT_TOLERANCE : Viewport.Left;
-                    int right = useTolerance ? Viewport.Right + VIEWPORT_TOLERANCE : Viewport.Right;
-                    int top = useTolerance ? Viewport.Top - VIEWPORT_TOLERANCE : Viewport.Top;
-                    int bottom = useTolerance ? Viewport.Bottom + VIEWPORT_TOLERANCE : Viewport.Bottom;
-
-                    if (scrPos.X < left || scrPos.X > right || scrPos.Y < top || scrPos.Y > bottom)
-                    {
-                        scrPos = default;
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                DebugLogger.LogDebug($"ERROR in WorldToScreen: {ex}");
-                scrPos = default;
-                return false;
-            }
-        }
 
         public static CameraDebugSnapshot GetDebugSnapshot()
         {
             return new CameraDebugSnapshot
             {
-                EspRunning = EspRunning,
                 IsADS = IsADS,
                 IsScoped = IsScoped,
                 FPSCamera = FPSCameraPtr,
@@ -538,7 +528,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
 
         public readonly struct CameraDebugSnapshot
         {
-            public bool EspRunning { get; init; }
             public bool IsADS { get; init; }
             public bool IsScoped { get; init; }
             public ulong FPSCamera { get; init; }
@@ -572,6 +561,5 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
         {
             return Vector2.Distance(ViewportCenter.AsVector2(), point.AsVector2());
         }
-        #endregion
     }
 }
