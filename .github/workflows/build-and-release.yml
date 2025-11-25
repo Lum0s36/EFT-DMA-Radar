@@ -1,0 +1,94 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Optional semver tag (e.g. 1.2.3). If omitted the workflow will auto-increment patch.'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    env:
+      PROJECT: src/Lone-EFT-DMA-Radar.csproj
+      RUNTIME: win-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Publish (Release)
+        run: |
+          dotnet publish ${{ env.PROJECT }} -c Release -r ${{ env.RUNTIME }} --self-contained false -o publish
+        shell: pwsh
+
+      - name: Create release.zip
+        run: |
+          if (Test-Path release.zip) { Remove-Item release.zip }
+          Compress-Archive -Path publish\* -DestinationPath release.zip -Force
+        shell: pwsh
+
+      - name: Determine release tag
+        id: next_tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Allow manual override from workflow_dispatch input: release_version
+            const inputVersion = github.event.inputs && github.event.inputs.release_version ? github.event.inputs.release_version : null;
+            if (inputVersion) {
+              const m = inputVersion.match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+              if (m) return inputVersion.startsWith('v') ? inputVersion : `v${inputVersion}`;
+              throw new Error('release_version must be a semver like 1.2.3');
+            }
+
+            const releases = await github.rest.repos.listReleases({ owner: context.repo.owner, repo: context.repo.repo, per_page: 100 });
+            if (!releases || releases.data.length === 0) {
+              return 'v0.0.1';
+            }
+            releases.data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            const latest = releases.data[0].tag_name;
+            const m = latest.match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+            if (!m) {
+              return 'v0.0.1';
+            }
+            const major = parseInt(m[1], 10);
+            const minor = parseInt(m[2], 10);
+            const patch = parseInt(m[3], 10) + 1;
+            return `v${major}.${minor}.${patch}`;
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.next_tag.outputs.result }}
+          release_name: Release ${{ steps.next_tag.outputs.result }}
+          body: Automated build from workflow
+          draft: false
+          prerelease: false
+
+      - name: Upload release.zip to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release.zip
+          asset_name: release.zip
+          asset_content_type: application/zip
