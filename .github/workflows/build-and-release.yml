@@ -73,6 +73,7 @@ jobs:
 
       - name: Create GitHub Release
         id: create_release
+        if: github.repository_owner == 'Lum0s36'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,6 +85,7 @@ jobs:
           prerelease: false
 
       - name: Upload release.zip to Release
+        if: github.repository_owner == 'Lum0s36'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
