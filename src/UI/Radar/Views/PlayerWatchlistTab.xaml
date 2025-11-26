@@ -21,11 +21,11 @@
 
         <!-- Collapsing header for adding players from current raid -->
         <Expander Header="Players in current raid" IsExpanded="False" Grid.Row="0" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <ComboBox ItemsSource="{Binding RaidPlayers}" SelectedItem="{Binding SelectedRaidPlayerId}" Width="200" />
-                <TextBox Text="{Binding ReasonInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" PlaceholderText="Reason (default Cheater)" />
-                <CheckBox Content="Streamer" IsChecked="{Binding IsStreamerInput}" />
-                <Button Content="Add" Command="{Binding AddSelectedRaidPlayerCommand}" />
+            <StackPanel Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding RaidPlayers}" SelectedItem="{Binding SelectedRaidPlayerId}" Width="200" Margin="0,0,8,0" />
+                <TextBox Text="{Binding ReasonInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,8,0" />
+                <CheckBox Content="Streamer" IsChecked="{Binding IsStreamerInput}" Margin="0,0,8,0" />
+                <Button Content="Add" Command="{Binding AddSelectedRaidPlayerCommand}" Margin="0,0,8,0" />
                 <Button Content="Refresh" Command="{Binding RefreshRaidPlayersCommand}" />
             </StackPanel>
         </Expander>

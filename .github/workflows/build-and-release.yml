@@ -3,6 +3,8 @@ name: Build and Release
 on:
   push:
     branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
   workflow_dispatch:
     inputs:
       release_version:
@@ -32,6 +34,10 @@ jobs:
 
       - name: Restore
         run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Build (Release)
+        run: dotnet build ${{ env.PROJECT }} -c Release --no-restore
+        shell: pwsh
 
       - name: Publish (Release)
         run: |
@@ -81,26 +87,52 @@ jobs:
           Compress-Archive -Path publish\* -DestinationPath $zipName -Force
         shell: pwsh
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Generate release notes
+        id: release_notes
         if: github.repository_owner == 'Lum0s36'
-        uses: actions/create-release@v1
+        uses: actions/github-script@v6
+        env:
+          VERSION: ${{ env.VERSION }}
+        with:
+          script: |
+            const newTag = process.env.VERSION;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const releases = await github.rest.repos.listReleases({ owner, repo, per_page: 100 });
+            // Find previous release tag (exclude the new tag if it somehow already exists)
+            const previous = releases.data.filter(r => r.tag_name !== newTag).sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            let notes = [];
+            if (!previous) {
+              notes.push('* Initial release');
+            } else {
+              try {
+                const comp = await github.rest.repos.compareCommits({ owner, repo, base: previous.tag_name, head: context.sha });
+                const raw = comp.data.commits.map(c => c.commit.message.split('\n')[0]);
+                const filtered = raw.filter(m => m && !m.startsWith('Merge pull request')).slice(-50); // last 50 unique relevant commits
+                const unique = [...new Set(filtered)];
+                if (unique.length === 0) {
+                  notes.push(`* No code changes detected since ${previous.tag_name}`);
+                } else {
+                  for (const msg of unique) {
+                    notes.push(`* ${msg}`);
+                  }
+                }
+              } catch (err) {
+                notes.push('* Unable to generate diff (fallback)');
+              }
+            }
+            return ['### Changes since previous release', ...notes].join('\n');
+
+      - name: Create GitHub Release and upload asset
+        if: github.repository_owner == 'Lum0s36'
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
-          body: Automated build from workflow
+          name: Release ${{ env.VERSION }}
+          body: ${{ steps.release_notes.outputs.result }}
           draft: false
           prerelease: false
-
-      - name: Upload release.zip to Release
-        if: github.repository_owner == 'Lum0s36'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APP_NAME }}_${{ env.VERSION }}.zip
-          asset_name: ${{ env.APP_NAME }}_${{ env.VERSION }}.zip
-          asset_content_type: application/zip
+          files: |
+            ${{ env.APP_NAME }}_${{ env.VERSION }}.zip

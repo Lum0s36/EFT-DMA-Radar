@@ -27,8 +27,10 @@ SOFTWARE.
 */
 
 using LoneEftDmaRadar.UI.Data;
+using LoneEftDmaRadar.UI.Misc;
 using LoneEftDmaRadar.UI.Radar.Views;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 
 namespace LoneEftDmaRadar.UI.Radar.ViewModels
@@ -79,12 +81,12 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
         private void RefreshRaidPlayers()
         {
             RaidPlayers.Clear();
-            var players = LoneEftDmaRadar.DMA.MemDMA.AllPlayers;
+            var players = Memory.Players;
             if (players != null)
             {
-                foreach (var p in players.Where(p => p is not LoneEftDmaRadar.Tarkov.GameWorld.Player.LocalPlayer))
+                foreach (var p in players.Where(p => p.IsHuman))
                 {
-                    var id = (p as LoneEftDmaRadar.Tarkov.GameWorld.Player.ObservedPlayer)?.AccountID ?? string.Empty;
+                    var id = p.AccountID ?? string.Empty;
                     if (!string.IsNullOrWhiteSpace(id)) RaidPlayers.Add(id);
                 }
             }
