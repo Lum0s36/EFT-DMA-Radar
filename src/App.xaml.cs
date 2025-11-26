@@ -172,6 +172,7 @@ namespace LoneEftDmaRadar
                 RuntimeHelpers.RunClassConstructor(typeof(ColorPickerViewModel).TypeHandle);
             });
             await Task.WhenAll(tarkovDataManager, eftMapManager, memoryInterface, misc);
+            await CheckForUpdatesGithubAsync();
             await loadingWindow.ViewModel.UpdateProgressAsync(100, "Loading Completed!");
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
@@ -262,6 +263,72 @@ namespace LoneEftDmaRadar
             //        defaultResult: MessageBoxResult.OK,
             //        options: MessageBoxOptions.DefaultDesktopOnly);
             //}
+        }
+
+        private static async Task CheckForUpdatesGithubAsync()
+        {
+            try
+            {
+                using var client = App.HttpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("EFT-DMA-Radar/1.0");
+                var owner = "Lum0s36";
+                var repo = "EFT-DMA-Radar";
+                using var resp = await client.GetAsync($"https://api.github.com/repos/{owner}/{repo}/releases/latest");
+                resp.EnsureSuccessStatusCode();
+                var json = await resp.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("tag_name", out var tagProp))
+                    return;
+                var latestTag = tagProp.GetString(); // e.g. v1.2.3
+                if (string.IsNullOrWhiteSpace(latestTag)) return;
+
+                var latest = NormalizeSemver(latestTag);
+                var current = NormalizeSemver(GetCurrentVersionString());
+                if (latest is null || current is null) return;
+
+                if (IsNewer(latest.Value, current.Value))
+                {
+                    var result = MessageBox.Show(
+                        messageBoxText: $"Version {current} ist veraltet. Neue Version {latest} verfügbar. Jetzt laden?",
+                        caption: App.Name,
+                        button: MessageBoxButton.YesNo,
+                        icon: MessageBoxImage.Information);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Open releases page for download
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = $"https://github.com/{owner}/{repo}/releases/latest",
+                            UseShellExecute = true
+                        });
+                    }
+                }
+            }
+            catch { /* ignore network errors */ }
+
+            static (int major,int minor,int patch)? NormalizeSemver(string v)
+            {
+                if (string.IsNullOrWhiteSpace(v)) return null;
+                if (v.StartsWith('v') || v.StartsWith('V')) v = v[1..];
+                var parts = v.Split('.');
+                if (parts.Length < 3) return null;
+                if (int.TryParse(parts[0], out var maj) && int.TryParse(parts[1], out var min) && int.TryParse(parts[2], out var pat))
+                    return (maj,min,pat);
+                return null;
+            }
+            static string GetCurrentVersionString()
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                var v = asm.GetName().Version;
+                if (v is null) return "0.0.0";
+                return $"{v.Major}.{v.Minor}.{v.Build}";
+            }
+            static bool IsNewer((int major,int minor,int patch) a, (int major,int minor,int patch) b)
+            {
+                if (a.major != b.major) return a.major > b.major;
+                if (a.minor != b.minor) return a.minor > b.minor;
+                return a.patch > b.patch;
+            }
         }
 
         [LibraryImport("kernel32.dll")]
