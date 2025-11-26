@@ -58,6 +58,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             DeleteFilterCommand = new SimpleCommand(OnDeleteFilter);
 
             AddEntryCommand = new SimpleCommand(OnAddEntry);
+            RemoveEntryCommand = new SimpleCommand(o => OnRemoveEntry(o));
 
             if (FilterNames.Any())
                 SelectedFilterName = App.Config.LootFilters.Selected;
@@ -312,6 +313,16 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
 
             Entries.Add(entry);
             SelectedItemToAdd = null;
+        }
+
+        public ICommand RemoveEntryCommand { get; }
+        private void OnRemoveEntry(object o)
+        {
+            if (o is LootFilterEntry entry && Entries.Contains(entry))
+            {
+                Entries.Remove(entry);
+                RefreshLootFilter();
+            }
         }
 
         public IEnumerable<LootFilterEntryType> FilterEntryTypes { get; } = Enum // ComboBox of Entry Types within DataGrid
