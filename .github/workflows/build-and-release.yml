@@ -35,15 +35,7 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.PROJECT }}
 
-      - name: Build (Release)
-        run: dotnet build ${{ env.PROJECT }} -c Release --no-restore
-        shell: pwsh
-
-      - name: Publish (Release)
-        run: |
-          dotnet publish ${{ env.PROJECT }} -c Release -r ${{ env.RUNTIME }} --self-contained false -o publish
-        shell: pwsh
-
+      # Determine version BEFORE build so we can stamp assembly version
       - name: Determine release tag
         id: next_tag
         uses: actions/github-script@v6
@@ -76,8 +68,28 @@ jobs:
         run: |
           $raw = '${{ steps.next_tag.outputs.result }}'
           $version = $raw.Trim('"')
-          Write-Host "Raw version: $raw -> Using: $version"
+          $versionNum = if ($version.StartsWith('v')) { $version.Substring(1) } else { $version }
+          Write-Host "Raw version: $raw -> Using: $version (numeric: $versionNum)"
           Add-Content -Path $env:GITHUB_ENV -Value "VERSION=$version"
+          Add-Content -Path $env:GITHUB_ENV -Value "VERSION_NUM=$versionNum"
+        shell: pwsh
+
+      - name: Build (Release)
+        run: >
+          dotnet build ${{ env.PROJECT }} -c Release --no-restore
+          /p:Version=${{ env.VERSION_NUM }}
+          /p:AssemblyVersion=${{ env.VERSION_NUM }}.0
+          /p:FileVersion=${{ env.VERSION_NUM }}.0
+          /p:InformationalVersion=${{ env.VERSION }}
+        shell: pwsh
+
+      - name: Publish (Release)
+        run: |
+          dotnet publish ${{ env.PROJECT }} -c Release -r ${{ env.RUNTIME }} --self-contained false -o publish \
+            /p:Version=${{ env.VERSION_NUM }} \
+            /p:AssemblyVersion=${{ env.VERSION_NUM }}.0 \
+            /p:FileVersion=${{ env.VERSION_NUM }}.0 \
+            /p:InformationalVersion=${{ env.VERSION }}
         shell: pwsh
 
       - name: Create versioned release zip
