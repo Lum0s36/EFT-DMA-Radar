@@ -28,6 +28,7 @@ SOFTWARE.
 
 using LoneEftDmaRadar.Tarkov.GameWorld.Player;
 using LoneEftDmaRadar.Tarkov.GameWorld.Player.Helpers;
+using LoneEftDmaRadar.Tarkov.Unity.Structures; // for Bones enum
 using LoneEftDmaRadar.UI.Misc;
 using SkiaSharp.Views.WPF;
 
@@ -80,7 +81,8 @@ namespace LoneEftDmaRadar.UI.Skia
                 // Precompute scale factors once per frame
                 UpdateMatrix(localPlayer);
 
-                DrawPlayers(localPlayer);
+                DrawPlayersAndAIAsSkeletons(localPlayer);
+                DrawFilteredLoot(localPlayer);
                 DrawCrosshair();
             }
             catch (Exception ex)
@@ -119,7 +121,37 @@ namespace LoneEftDmaRadar.UI.Skia
             _camPos = lp.Position;
         }
 
-        private void DrawPlayers(LocalPlayer localPlayer)
+        // Skeleton connections reused for Aimview
+        private static readonly (Bones From, Bones To)[] _boneConnections = new[]
+        {
+            (Bones.HumanHead, Bones.HumanNeck),
+            (Bones.HumanNeck, Bones.HumanSpine3),
+            (Bones.HumanSpine3, Bones.HumanSpine2),
+            (Bones.HumanSpine2, Bones.HumanSpine1),
+            (Bones.HumanSpine1, Bones.HumanPelvis),
+            // Left Arm
+            (Bones.HumanNeck, Bones.HumanLUpperarm),
+            (Bones.HumanLUpperarm, Bones.HumanLForearm1),
+            (Bones.HumanLForearm1, Bones.HumanLForearm2),
+            (Bones.HumanLForearm2, Bones.HumanLPalm),
+            // Right Arm
+            (Bones.HumanNeck, Bones.HumanRUpperarm),
+            (Bones.HumanRUpperarm, Bones.HumanRForearm1),
+            (Bones.HumanRForearm1, Bones.HumanRForearm2),
+            (Bones.HumanRForearm2, Bones.HumanRPalm),
+            // Left Leg
+            (Bones.HumanPelvis, Bones.HumanLThigh1),
+            (Bones.HumanLThigh1, Bones.HumanLThigh2),
+            (Bones.HumanLThigh2, Bones.HumanLCalf),
+            (Bones.HumanLCalf, Bones.HumanLFoot),
+            // Right Leg
+            (Bones.HumanPelvis, Bones.HumanRThigh1),
+            (Bones.HumanRThigh1, Bones.HumanRThigh2),
+            (Bones.HumanRThigh2, Bones.HumanRCalf),
+            (Bones.HumanRCalf, Bones.HumanRFoot),
+        };
+
+        private void DrawPlayersAndAIAsSkeletons(LocalPlayer localPlayer)
         {
             var players = AllPlayers?
                 .Where(p => p.IsActive && p.IsAlive && p is not Tarkov.GameWorld.Player.LocalPlayer);
@@ -127,21 +159,47 @@ namespace LoneEftDmaRadar.UI.Skia
             if (players is null)
                 return;
 
-            float minRadius = 1.5f * App.Config.UI.UIScale;
-            float maxRadius = 12f * App.Config.UI.UIScale;
-            const float scaleFactor = 2.0f;
-
             foreach (var player in players)
             {
-                if (WorldToScreen(in player.Position, out var screen))
+                float distance = Vector3.Distance(localPlayer.Position, player.Position);
+                if (App.Config.UI.MaxDistance > 0 && distance > App.Config.UI.MaxDistance)
+                    continue;
+
+                var paint = GetPaint(player);
+                float thickness = Math.Max(1f, SKPaints.PaintAimviewWidgetPMC.StrokeWidth);
+
+                foreach (var (from, to) in _boneConnections)
                 {
-                    float distance = Vector3.Distance(localPlayer.Position, player.Position);
-                    if (distance > App.Config.UI.MaxDistance)
-                        continue;
+                    var p1 = player.GetBonePos(from);
+                    var p2 = player.GetBonePos(to);
+                    if (p1 == Vector3.Zero || p2 == Vector3.Zero) continue;
+                    if (TryProject(p1, out var s1) && TryProject(p2, out var s2))
+                    {
+                        _canvas.DrawLine(s1.X, s1.Y, s2.X, s2.Y, paint);
+                    }
+                }
+            }
+        }
 
-                    float radius = Math.Clamp(maxRadius - MathF.Sqrt(distance) * 0.65f, minRadius, maxRadius);
+        private void DrawFilteredLoot(LocalPlayer localPlayer)
+        {
+            if (!(App.Config.Loot.Enabled)) return;
+            var lootItems = Memory.Game?.Loot?.FilteredLoot;
+            if (lootItems is null) return;
 
-                    _canvas.DrawCircle(screen.X, screen.Y, radius, GetPaint(player));
+            foreach (var item in lootItems)
+            {
+                float distance = Vector3.Distance(localPlayer.Position, item.Position);
+                if (App.Config.UI.EspLootMaxDistance > 0 && distance > App.Config.UI.EspLootMaxDistance)
+                    continue;
+
+                if (TryProject(item.Position, out var screen))
+                {
+                    // small marker
+                    _canvas.DrawCircle(screen.X, screen.Y, 3f * App.Config.UI.UIScale, SKPaints.PaintFilteredLoot);
+                    // name label
+                    var shortName = string.IsNullOrWhiteSpace(item.ShortName) ? item.Name : item.ShortName;
+                    _canvas.DrawText(shortName, new SKPoint(screen.X + 6, screen.Y + 2), SKTextAlign.Left, SKFonts.EspWidgetFont, SKPaints.TextFilteredLoot);
                 }
             }
         }
@@ -231,10 +289,9 @@ namespace LoneEftDmaRadar.UI.Skia
             };
         }
 
-        private bool WorldToScreen(in Vector3 world, out SKPoint scr)
+        private bool TryProject(in Vector3 world, out SKPoint scr)
         {
             scr = default;
-
             var dir = world - _camPos;
 
             float dz = Vector3.Dot(dir, _forward);
@@ -260,7 +317,5 @@ namespace LoneEftDmaRadar.UI.Skia
 
             return !(scr.X < 0 || scr.X > w || scr.Y < 0 || scr.Y > h);
         }
-
-
     }
 }
