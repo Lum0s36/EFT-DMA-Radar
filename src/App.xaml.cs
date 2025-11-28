@@ -68,7 +68,7 @@ namespace LoneEftDmaRadar
     /// </summary>
     public partial class App : Application
     {
-        internal const string Name = "Moulman EFT DMA Radar";
+        internal const string Name = "Gaming Chair - EFT DMA RADAR";
         private const string MUTEX_ID = "0f908ff7-e614-6a93-60a3-cee36c9cea91";
         private static readonly Mutex _mutex;
 
