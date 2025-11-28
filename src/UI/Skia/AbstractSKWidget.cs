@@ -184,11 +184,25 @@ namespace LoneEftDmaRadar.UI.Skia
             parent.SizeChanged -= Parent_SizeChanged;
         }
 
+        // Convert WPF DIPs to SKGL canvas pixels to handle DPI scaling correctly
+        private SKPoint ToCanvasPoint(System.Windows.IInputElement element, System.Windows.Point pos)
+        {
+            double aw = _parent.ActualWidth;
+            double ah = _parent.ActualHeight;
+            var cs = _parent.CanvasSize;
+            if (aw <= 0 || ah <= 0 || cs.Width <= 0 || cs.Height <= 0)
+                return new SKPoint((float)pos.X, (float)pos.Y); // fallback
+            float x = (float)(pos.X * (cs.Width / aw));
+            float y = (float)(pos.Y * (cs.Height / ah));
+            return new SKPoint(x, y);
+        }
+
         private void Parent_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             var element = (IInputElement)sender;
             var pos = e.GetPosition(element);
-            _lastMousePosition = new((float)pos.X, (float)pos.Y);
+            var posF = ToCanvasPoint(element, pos);
+            _lastMousePosition = new(posF.X, posF.Y);
 
             var pt = new SKPoint(_lastMousePosition.X, _lastMousePosition.Y);
             switch (HitTest(pt))
@@ -212,7 +226,7 @@ namespace LoneEftDmaRadar.UI.Skia
         {
             var element = (IInputElement)sender;
             var pos = e.GetPosition(element);
-            var posF = new SKPoint((float)pos.X, (float)pos.Y);
+            var posF = ToCanvasPoint(element, pos);
 
             if (_resizeDrag && CanResize)
             {

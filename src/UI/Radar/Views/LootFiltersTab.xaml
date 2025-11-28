@@ -91,7 +91,8 @@
         </StackPanel>
 
         <!-- Row 2: Entries grid with inline color‐picker -->
-        <DataGrid ItemsSource="{Binding Entries}"
+        <DataGrid x:Name="EntriesGrid"
+                  ItemsSource="{Binding Entries}"
                   AutoGenerateColumns="False"
                   Grid.Row="2"
                   Margin="5"
@@ -99,7 +100,16 @@
                   EnableColumnVirtualization="True"
                   ScrollViewer.CanContentScroll="True"
                   VirtualizingStackPanel.IsVirtualizing="True"
-                  VirtualizingStackPanel.VirtualizationMode="Recycling">
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  KeyDown="EntriesGrid_KeyDown">
+
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete"
+                              Command="{Binding DeleteEntryCommand}"
+                              CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
 
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn Header="Enabled"

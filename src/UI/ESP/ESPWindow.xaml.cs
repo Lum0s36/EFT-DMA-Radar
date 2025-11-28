@@ -294,10 +294,15 @@ namespace LoneEftDmaRadar.UI.ESP
                         // Render Exfils
                         if (Exits is not null && App.Config.UI.EspExfils)
                         {
+                            const float exfilMaxDistance = 25f;
                             foreach (var exit in Exits)
                             {
                                 if (exit is Exfil exfil && (exfil.Status == Exfil.EStatus.Open || exfil.Status == Exfil.EStatus.Pending))
                                 {
+                                     float distance = Vector3.Distance(localPlayer.Position, exfil.Position);
+                                     if (distance > exfilMaxDistance)
+                                         continue;
+
                                      if (WorldToScreen2(exfil.Position, out var screen, screenWidth, screenHeight))
                                      {
                                          var dotColor = exfil.Status == Exfil.EStatus.Pending
@@ -314,12 +319,12 @@ namespace LoneEftDmaRadar.UI.ESP
 
                         if (Explosives is not null && App.Config.UI.EspTripwires)
                         {
-                            DrawTripwires(ctx, screenWidth, screenHeight);
+                            DrawTripwires(ctx, screenWidth, screenHeight, localPlayer);
                         }
 
                         if (Explosives is not null && App.Config.UI.EspGrenades)
                         {
-                            DrawGrenades(ctx, screenWidth, screenHeight);
+                            DrawGrenades(ctx, screenWidth, screenHeight, localPlayer);
                         }
 
                         // Render players
@@ -357,6 +362,7 @@ namespace LoneEftDmaRadar.UI.ESP
             if (lootItems is null) return;
 
             var camPos = localPlayer?.Position ?? Vector3.Zero;
+            const float maxRenderDistance = 25f; // Maximum render distance for loot
 
             foreach (var item in lootItems)
             {
@@ -384,9 +390,9 @@ namespace LoneEftDmaRadar.UI.ESP
                 if (isBackpack && !App.Config.UI.EspBackpacks)
                     continue;
 
-                // Check distance to loot
+                // Check distance to loot - enforce 25m max
                 float distance = Vector3.Distance(camPos, item.Position);
-                if (App.Config.UI.EspLootMaxDistance > 0 && distance > App.Config.UI.EspLootMaxDistance)
+                if (distance > maxRenderDistance)
                     continue;
 
                 if (WorldToScreen2(item.Position, out var screen, screenWidth, screenHeight))
@@ -413,11 +419,22 @@ namespace LoneEftDmaRadar.UI.ESP
                          inCone = screenAngle <= App.Config.UI.EspLootConeAngle;
                      }
 
-                     // Determine colors based on item type (default to user-selected loot color).
-                     DxColor circleColor = GetLootColorForRender();
-                     DxColor textColor = circleColor;
+                     // Calculate distance-based scale factor with steeper falloff
+                     // Scale reference: 1.0 at 25m, 0.3 at 100m, 2.0 at 10m
+                     float distanceScale = Math.Clamp(25f / Math.Max(distance, 3f), 0.2f, 2.5f);
 
-                     if (isQuest)
+                     // Determine colors - prioritize custom filter color if set
+                     DxColor circleColor;
+                     DxColor textColor;
+
+                     // Check for custom filter color first (highest priority)
+                     var filterColor = item.CustomFilter?.Color;
+                     if (!string.IsNullOrEmpty(filterColor) && SKColor.TryParse(filterColor, out var skFilterColor))
+                     {
+                         circleColor = ToColor(skFilterColor);
+                         textColor = circleColor;
+                     }
+                     else if (isQuest)
                      {
                          circleColor = ToColor(SKPaints.PaintQuestItem);
                          textColor = circleColor;
@@ -452,8 +469,17 @@ namespace LoneEftDmaRadar.UI.ESP
                          circleColor = ToColor(SKPaints.PaintCorpse);
                          textColor = circleColor;
                      }
+                     else
+                     {
+                         // Fallback to generic loot color
+                         circleColor = GetLootColorForRender();
+                         textColor = circleColor;
+                     }
 
-                     ctx.DrawCircle(ToRaw(screen), 2f, circleColor, true);
+                     // Scale marker radius with distance - smaller base radius
+                     float baseRadius = 2.5f;
+                     float scaledRadius = Math.Clamp(baseRadius * distanceScale, 1f, 6f);
+                     ctx.DrawCircle(ToRaw(screen), scaledRadius, circleColor, true);
 
                      if (item.Important || inCone)
                      {
@@ -474,7 +500,17 @@ namespace LoneEftDmaRadar.UI.ESP
                                      : $"{shortName} ({LoneEftDmaRadar.Misc.Utilities.FormatNumberKM(item.Price)})";
                              }
                          }
-                         ctx.DrawText(text, screen.X + 4, screen.Y + 4, textColor, DxTextSize.Small);
+
+                         // Scale text size with distance
+                         DxTextSize textSize;
+                         if (distanceScale > 1.5f)
+                             textSize = DxTextSize.Medium;
+                         else if (distanceScale > 0.8f)
+                             textSize = DxTextSize.Small;
+                         else
+                             textSize = DxTextSize.Small; // Could add XSmall if needed
+
+                         ctx.DrawText(text, screen.X + scaledRadius + 4, screen.Y + 4, textColor, textSize);
                     }
                 }
             }
@@ -491,7 +527,7 @@ namespace LoneEftDmaRadar.UI.ESP
 
             bool selectAll = App.Config.Containers.SelectAll;
             var selected = App.Config.Containers.Selected;
-            float maxDistance = App.Config.Containers.EspDrawDistance;
+            const float maxRenderDistance = 25f; // Maximum render distance for containers
             var color = GetContainerColorForRender();
 
             foreach (var container in containers)
@@ -501,7 +537,7 @@ namespace LoneEftDmaRadar.UI.ESP
                     continue;
 
                 float distance = Vector3.Distance(localPlayer.Position, container.Position);
-                if (maxDistance > 0 && distance > maxDistance)
+                if (distance > maxRenderDistance)
                     continue;
 
                 if (!WorldToScreen2(container.Position, out var screen, screenWidth, screenHeight))
@@ -512,10 +548,12 @@ namespace LoneEftDmaRadar.UI.ESP
             }
         }
 
-        private void DrawTripwires(Dx9RenderContext ctx, float screenWidth, float screenHeight)
+        private void DrawTripwires(Dx9RenderContext ctx, float screenWidth, float screenHeight, LocalPlayer localPlayer)
         {
             if (Explosives is null)
                 return;
+
+            const float maxRenderDistance = 25f; // Maximum render distance for tripwires
 
             foreach (var explosive in Explosives)
             {
@@ -527,12 +565,24 @@ namespace LoneEftDmaRadar.UI.ESP
                     if (tripwire.Position == Vector3.Zero)
                         continue;
 
+                    // Check distance - enforce 25m max
+                    float distance = Vector3.Distance(localPlayer.Position, tripwire.Position);
+                    if (distance > maxRenderDistance)
+                        continue;
+
                     if (!WorldToScreen2(tripwire.Position, out var screen, screenWidth, screenHeight))
                         continue;
 
+                    // Calculate distance and scale like loot items
+                    float distanceScale = Math.Clamp(25f / Math.Max(distance, 3f), 0.2f, 2.5f);
+                    float scaledRadius = Math.Clamp(2.5f * distanceScale, 1f, 6f);
+
                     var color = GetTripwireColorForRender();
-                    ctx.DrawCircle(ToRaw(screen), 5f, color, true);
-                    ctx.DrawText("Tripwire", screen.X + 6, screen.Y, color, DxTextSize.Small);
+                    ctx.DrawCircle(ToRaw(screen), scaledRadius, color, true);
+
+                    // Scale text with distance
+                    DxTextSize textSize = distanceScale > 1.5f ? DxTextSize.Medium : DxTextSize.Small;
+                    ctx.DrawText("Tripwire", screen.X + scaledRadius + 4, screen.Y, color, textSize);
                 }
                 catch
                 {
@@ -542,10 +592,12 @@ namespace LoneEftDmaRadar.UI.ESP
             }
         }
 
-        private void DrawGrenades(Dx9RenderContext ctx, float screenWidth, float screenHeight)
+        private void DrawGrenades(Dx9RenderContext ctx, float screenWidth, float screenHeight, LocalPlayer localPlayer)
         {
             if (Explosives is null)
                 return;
+
+            const float maxRenderDistance = 25f; // Maximum render distance for grenades
 
             foreach (var explosive in Explosives)
             {
@@ -557,12 +609,24 @@ namespace LoneEftDmaRadar.UI.ESP
                     if (grenade.Position == Vector3.Zero)
                         continue;
 
+                    // Check distance - enforce 25m max
+                    float distance = Vector3.Distance(localPlayer.Position, grenade.Position);
+                    if (distance > maxRenderDistance)
+                        continue;
+
                     if (!WorldToScreen2(grenade.Position, out var screen, screenWidth, screenHeight))
                         continue;
 
+                    // Calculate distance and scale like loot items
+                    float distanceScale = Math.Clamp(25f / Math.Max(distance, 3f), 0.2f, 2.5f);
+                    float scaledRadius = Math.Clamp(2.5f * distanceScale, 1f, 6f);
+
                     var color = GetGrenadeColorForRender();
-                    ctx.DrawCircle(ToRaw(screen), 5f, color, true);
-                    ctx.DrawText("Grenade", screen.X + 6, screen.Y, color, DxTextSize.Small);
+                    ctx.DrawCircle(ToRaw(screen), scaledRadius, color, true);
+
+                    // Scale text with distance
+                    DxTextSize textSize = distanceScale > 1.5f ? DxTextSize.Medium : DxTextSize.Small;
+                    ctx.DrawText("Grenade", screen.X + scaledRadius + 4, screen.Y, color, textSize);
                 }
                 catch
                 {

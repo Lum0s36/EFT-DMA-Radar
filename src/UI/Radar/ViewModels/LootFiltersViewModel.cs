@@ -59,6 +59,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
 
             AddEntryCommand = new SimpleCommand(OnAddEntry);
             RemoveEntryCommand = new SimpleCommand(OnRemoveEntry);
+            DeleteEntryCommand = new SimpleCommand(OnDeleteEntry);
 
             if (FilterNames.Any())
                 SelectedFilterName = App.Config.LootFilters.Selected;
@@ -319,6 +320,22 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
         private void OnRemoveEntry(object o)
         {
             if (o is LootFilterEntry entry && Entries.Contains(entry))
+            {
+                Entries.Remove(entry);
+                RefreshLootFilter();
+            }
+        }
+
+        public ICommand DeleteEntryCommand { get; }
+        private void OnDeleteEntry()
+        {
+            // Invoked via context menu; selection handled in view's code-behind
+        }
+
+        public void DeleteEntry(LootFilterEntry entry)
+        {
+            if (entry == null) return;
+            if (Entries.Contains(entry))
             {
                 Entries.Remove(entry);
                 RefreshLootFilter();
