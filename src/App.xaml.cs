@@ -122,6 +122,10 @@ namespace LoneEftDmaRadar
             try
             {
                 base.OnStartup(e);
+                
+                // Check for updates before showing loading window
+                await CheckForVelopackUpdatesAsync();
+                
                 using var loading = new LoadingWindow();
                 await ConfigureProgramAsync(loadingWindow: loading);
 
@@ -158,7 +162,6 @@ namespace LoneEftDmaRadar
         private async Task ConfigureProgramAsync(LoadingWindow loadingWindow)
         {
             await loadingWindow.ViewModel.UpdateProgressAsync(15, "Loading, Please Wait...");
-            //_ = Task.Run(CheckForUpdatesAsync); // Run continuations on the thread pool
             var tarkovDataManager = TarkovDataManager.ModuleInitAsync();
             var eftMapManager = EftMapManager.ModuleInitAsync();
             var memoryInterface = MemoryInterface.ModuleInitAsync();
@@ -174,10 +177,104 @@ namespace LoneEftDmaRadar
                 RuntimeHelpers.RunClassConstructor(typeof(ColorPickerViewModel).TypeHandle);
             });
             await Task.WhenAll(tarkovDataManager, eftMapManager, memoryInterface, misc);
-            // Use Velopack built-in update mechanism; skip manual GitHub ZIP updater to avoid conflicts
-            // await CheckForUpdatesGithubAsync();
             await loadingWindow.ViewModel.UpdateProgressAsync(100, "Loading Completed!");
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        /// <summary>
+        /// Check for updates using Velopack with GitHub Releases as source.
+        /// </summary>
+        private async Task CheckForVelopackUpdatesAsync()
+        {
+            try
+            {
+                // Check if we're running in a Velopack-installed context
+                var updateManager = new UpdateManager(
+                    new GithubSource("https://github.com/Lum0s36/EFT-DMA-Radar", null, false)
+                );
+
+                // Check for updates
+                var updateInfo = await updateManager.CheckForUpdatesAsync();
+                
+                if (updateInfo == null)
+                {
+                    // No updates available
+                    return;
+                }
+
+                // Get current version
+                var currentVersion = updateManager.CurrentVersion?.ToString() ?? "Unknown";
+                var newVersion = updateInfo.TargetFullRelease.Version.ToString();
+
+                // Show update prompt
+                var result = MessageBox.Show(
+                    $"A new version is available!\n\n" +
+                    $"Current Version: {currentVersion}\n" +
+                    $"New Version: {newVersion}\n\n" +
+                    $"Would you like to download and install the update now?\n" +
+                    $"The application will restart after the update.",
+                    "Update Available",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Download and apply update
+                    await updateManager.DownloadUpdatesAsync(updateInfo);
+                    
+                    MessageBox.Show(
+                        "Update downloaded successfully!\n" +
+                        "The application will now restart to complete the installation.",
+                        "Update Ready",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+                    
+                    // Apply updates and restart
+                    updateManager.ApplyUpdatesAndRestart(updateInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Don't block startup if update check fails
+                DebugLogger.LogDebug($"[Velopack] Update check failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check system dependencies (optional - can be expanded).
+        /// </summary>
+        private bool CheckDependencies()
+        {
+            try
+            {
+                // Check .NET 9 Runtime
+                var runtimeVersion = Environment.Version;
+                if (runtimeVersion.Major < 9)
+                {
+                    MessageBox.Show(
+                        $"This application requires .NET 9 or higher.\n" +
+                        $"Current version: {runtimeVersion}\n\n" +
+                        $"Please install .NET 9 Runtime from:\n" +
+                        $"https://dotnet.microsoft.com/download/dotnet/9.0",
+                        "Missing Dependency",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error
+                    );
+                    return false;
+                }
+
+                // Add more dependency checks here if needed
+                // (Visual C++ Redistributables, DirectX, etc.)
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.LogDebug($"[Dependencies] Check failed: {ex}");
+                return true; // Don't block if check fails
+            }
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -188,7 +285,6 @@ namespace LoneEftDmaRadar
         /// <summary>
         /// Sets up the Dependency Injection container for the application.
         /// </summary>
-        /// <returns></returns>
         private static IServiceProvider BuildServiceProvider()
         {
             var services = new ServiceCollection();
@@ -226,10 +322,6 @@ namespace LoneEftDmaRadar
             return true;
         }
 
-        // Existing manual updater left in place for reference, but unused when Velopack is active.
-        private static async Task CheckForUpdatesAsync() { /* omitted */ }
-        private static async Task CheckForUpdatesGithubAsync() { /* omitted */ }
-
         [LibraryImport("kernel32.dll")]
         private static partial EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
 
@@ -240,8 +332,6 @@ namespace LoneEftDmaRadar
             ES_CONTINUOUS = 0x80000000,
             ES_DISPLAY_REQUIRED = 0x00000002,
             ES_SYSTEM_REQUIRED = 0x00000001
-            // Legacy flag, should not be used.
-            // ES_USER_PRESENT = 0x00000004
         }
 
         [LibraryImport("powrprof.dll")]

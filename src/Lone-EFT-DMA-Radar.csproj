@@ -87,6 +87,7 @@
 		<PackageReference Include="System.Management" Version="7.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.0" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<None Include=".github\workflows\release.yml" />
 		<PackageReference Include="Open.Nat.V2" Version="3.1.1" />
 	</ItemGroup>
 

@@ -1,0 +1,84 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Install Velopack CLI
+      run: dotnet tool install -g vpk
+      
+    - name: Get version
+      id: get_version
+      run: |
+        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = "${{ github.ref_name }}".TrimStart('v')
+        }
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      
+    - name: Build Release
+      run: |
+        dotnet publish src/Lone-EFT-DMA-Radar.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained false `
+          -o publish/release `
+          /p:PublishSingleFile=false `
+          /p:DebugType=None `
+          /p:DebugSymbols=false
+      
+    - name: Package with Velopack
+      run: |
+        New-Item -ItemType Directory -Path releases -Force
+        vpk pack `
+          --packId "EFT-DMA-Radar" `
+          --packVersion "${{ steps.get_version.outputs.version }}" `
+          --packDir publish/release `
+          --mainExe "Lone-EFT-DMA-Radar.exe" `
+          --packTitle "Gaming Chair - EFT DMA RADAR" `
+          --packAuthors "Lum0s36" `
+          --icon Resources/lone-icon.ico `
+          --outputDir releases `
+          --channel stable `
+          --delta None
+      shell: pwsh
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+        files: |
+          releases/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: installer-v${{ steps.get_version.outputs.version }}
+        path: releases/
