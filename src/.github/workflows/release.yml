@@ -48,10 +48,14 @@ jobs:
           /p:PublishSingleFile=false `
           /p:DebugType=None `
           /p:DebugSymbols=false
+      shell: pwsh
+      
+    - name: Create releases directory
+      run: New-Item -ItemType Directory -Path releases -Force
+      shell: pwsh
       
     - name: Package with Velopack
       run: |
-        New-Item -ItemType Directory -Path releases -Force
         vpk pack `
           --packId "EFT-DMA-Radar" `
           --packVersion "${{ steps.get_version.outputs.version }}" `
@@ -60,9 +64,27 @@ jobs:
           --packTitle "Gaming Chair - EFT DMA RADAR" `
           --packAuthors "Lum0s36" `
           --icon Resources/lone-icon.ico `
+          --outputDir releases
+      shell: pwsh
+      
+    - name: Create Setup.exe
+      run: |
+        vpk download github `
+          --repoUrl "https://github.com/${{ github.repository }}" `
           --outputDir releases `
-          --channel stable `
-          --delta None
+          --pre
+      shell: pwsh
+      
+    - name: Verify files
+      run: |
+        Write-Host "Files created in releases folder:"
+        Get-ChildItem releases -Recurse | Format-Table FullName, Length
+        
+        if (!(Test-Path "releases/Setup.exe")) {
+          Write-Error "Setup.exe was not created!"
+          exit 1
+        }
+        Write-Host "Setup.exe found successfully!"
       shell: pwsh
       
     - name: Create Release
@@ -73,7 +95,9 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          releases/*
+          releases/Setup.exe
+          releases/*.nupkg
+          releases/RELEASES
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
