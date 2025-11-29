@@ -245,6 +245,37 @@ Toggle Fullscreen: F11
                 </StackPanel>
             </GroupBox>
 
+            <!-- Aimview ESP -->
+            <GroupBox Header="Aimview ESP"
+                      Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap"
+                               Margin="0,0,0,12"
+                               FontStyle="Italic">
+Configure what entities are rendered in the Aimview widget.
+                    </TextBlock>
+
+                    <WrapPanel>
+                        <CheckBox Content="Show Loot"
+                                  ToolTip="Show loot items in Aimview widget"
+                                  IsChecked="{Binding AimviewShowLoot, Mode=TwoWay}"
+                                  Margin="0,0,16,8" />
+                        <CheckBox Content="Show Quest Items"
+                                  ToolTip="Show quest items in Aimview widget"
+                                  IsChecked="{Binding AimviewShowQuestItems, Mode=TwoWay}"
+                                  Margin="0,0,16,8" />
+                        <CheckBox Content="Show AI"
+                                  ToolTip="Show AI/Scavs/Bosses in Aimview widget"
+                                  IsChecked="{Binding AimviewShowAI, Mode=TwoWay}"
+                                  Margin="0,0,16,8" />
+                        <CheckBox Content="Show Enemy Players"
+                                  ToolTip="Show enemy players in Aimview widget"
+                                  IsChecked="{Binding AimviewShowEnemyPlayers, Mode=TwoWay}"
+                                  Margin="0,0,0,8" />
+                    </WrapPanel>
+                </StackPanel>
+            </GroupBox>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

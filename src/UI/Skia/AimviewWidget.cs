@@ -225,6 +225,9 @@ namespace LoneEftDmaRadar.UI.Skia
 
         private void DrawPlayersAndAIAsSkeletons(LocalPlayer localPlayer)
         {
+            if (!App.Config.AimviewWidget.ShowAI && !App.Config.AimviewWidget.ShowEnemyPlayers)
+                return; // Both disabled, skip entirely
+
             var players = AllPlayers?
                 .Where(p => p.IsActive && p.IsAlive && p is not Tarkov.GameWorld.Player.LocalPlayer);
 
@@ -233,6 +236,15 @@ namespace LoneEftDmaRadar.UI.Skia
 
             foreach (var player in players)
             {
+                // Filter based on config
+                bool isAI = player.IsAI;
+                bool isEnemyPlayer = !isAI && player.IsHostile;
+
+                if (isAI && !App.Config.AimviewWidget.ShowAI)
+                    continue;
+                if (isEnemyPlayer && !App.Config.AimviewWidget.ShowEnemyPlayers)
+                    continue;
+
                 float distance = Vector3.Distance(localPlayer.Position, player.Position);
                 if (App.Config.UI.MaxDistance > 0 && distance > App.Config.UI.MaxDistance)
                     continue;
@@ -260,6 +272,9 @@ namespace LoneEftDmaRadar.UI.Skia
 
         private void DrawFilteredLoot(LocalPlayer localPlayer)
         {
+            if (!App.Config.AimviewWidget.ShowLoot)
+                return; // Loot disabled in Aimview
+
             if (!(App.Config.Loot.Enabled)) return;
             var lootItems = Memory.Game?.Loot?.FilteredLoot;
             if (lootItems is null) return;
@@ -268,6 +283,10 @@ namespace LoneEftDmaRadar.UI.Skia
 
             foreach (var item in lootItems)
             {
+                // Filter quest items based on config
+                if (item.IsQuestItem && !App.Config.AimviewWidget.ShowQuestItems)
+                    continue;
+
                 float distance = Vector3.Distance(localPlayer.Position, item.Position);
                 if (distance > maxDistance)
                     continue;

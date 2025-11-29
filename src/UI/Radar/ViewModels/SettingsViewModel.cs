@@ -430,5 +430,61 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
 
         #endregion
 
+        #region Aimview ESP
+
+        public bool AimviewShowLoot
+        {
+            get => App.Config.AimviewWidget.ShowLoot;
+            set
+            {
+                if (App.Config.AimviewWidget.ShowLoot != value)
+                {
+                    App.Config.AimviewWidget.ShowLoot = value;
+                    OnPropertyChanged(nameof(AimviewShowLoot));
+                }
+            }
+        }
+
+        public bool AimviewShowQuestItems
+        {
+            get => App.Config.AimviewWidget.ShowQuestItems;
+            set
+            {
+                if (App.Config.AimviewWidget.ShowQuestItems != value)
+                {
+                    App.Config.AimviewWidget.ShowQuestItems = value;
+                    OnPropertyChanged(nameof(AimviewShowQuestItems));
+                }
+            }
+        }
+
+        public bool AimviewShowAI
+        {
+            get => App.Config.AimviewWidget.ShowAI;
+            set
+            {
+                if (App.Config.AimviewWidget.ShowAI != value)
+                {
+                    App.Config.AimviewWidget.ShowAI = value;
+                    OnPropertyChanged(nameof(AimviewShowAI));
+                }
+            }
+        }
+
+        public bool AimviewShowEnemyPlayers
+        {
+            get => App.Config.AimviewWidget.ShowEnemyPlayers;
+            set
+            {
+                if (App.Config.AimviewWidget.ShowEnemyPlayers != value)
+                {
+                    App.Config.AimviewWidget.ShowEnemyPlayers = value;
+                    OnPropertyChanged(nameof(AimviewShowEnemyPlayers));
+                }
+            }
+        }
+
+        #endregion
+
     }
 }

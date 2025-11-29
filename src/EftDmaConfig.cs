@@ -1074,6 +1074,30 @@ namespace LoneEftDmaRadar
         [JsonPropertyName("location")]
         [JsonConverter(typeof(SKRectJsonConverter))]
         public SKRect Location { get; set; }
+
+        /// <summary>
+        /// Show loot items in Aimview.
+        /// </summary>
+        [JsonPropertyName("showLoot")]
+        public bool ShowLoot { get; set; } = true;
+
+        /// <summary>
+        /// Show quest items in Aimview.
+        /// </summary>
+        [JsonPropertyName("showQuestItems")]
+        public bool ShowQuestItems { get; set; } = true;
+
+        /// <summary>
+        /// Show AI/Scavs in Aimview.
+        /// </summary>
+        [JsonPropertyName("showAI")]
+        public bool ShowAI { get; set; } = true;
+
+        /// <summary>
+        /// Show enemy players in Aimview.
+        /// </summary>
+        [JsonPropertyName("showEnemyPlayers")]
+        public bool ShowEnemyPlayers { get; set; } = true;
     }
 
     public sealed class InfoWidgetConfig
