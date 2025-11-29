@@ -49,7 +49,11 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
         private static float _fov;
         private static float _aspect;
         private static readonly ViewMatrix _viewMatrix = new();
-        public static Vector3 CameraPosition => new(_viewMatrix.M14, _viewMatrix.M24, _viewMatrix.Translation.Z);
+        
+        // Store camera Transform position separately for accurate WorldToScreen
+        private static Vector3 _cameraWorldPosition = Vector3.Zero;
+        
+        public static Vector3 CameraPosition => _cameraWorldPosition;
     
         public static void Reset()
         {
@@ -59,6 +63,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
             ActiveCameraPtr = 0;
             _fov = 0f;
             _aspect = 0f;
+            _cameraWorldPosition = Vector3.Zero;
             IsInitialized = false;
         }
         public ulong FPSCamera { get; }
@@ -73,7 +78,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
             {
                 int width, height;
 
-                if (App.Config.UI.EspScreenWidth > 0 && App.Config.UI.EspScreenHeight > 0)
+                if ( App.Config.UI.EspScreenWidth > 0 && App.Config.UI.EspScreenHeight > 0)
                 {
                     // Use manual override
                     width = App.Config.UI.EspScreenWidth;
@@ -285,7 +290,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
         {
             try
             {
-                DebugLogger.LogDebug($"\n{name} Matrix @ 0x{matrixAddress:X}:");
+                DebugLogger.LogDebug($"\n{name} Matrix @ 0x{matrixAddress:X}amalla:");
 
                 // Read ViewMatrix
                 var vm = Memory.ReadValue<Matrix4x4>(matrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset, false);
@@ -385,9 +390,222 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
 
             DebugLogger.LogDebug($"\n=== Search Results ===");
             DebugLogger.LogDebug($"  FPS Camera:   {(fpsCamera != 0 ? $"✓ Found @ 0x{fpsCamera:X}" : "✗ NOT FOUND")}");
-            DebugLogger.LogDebug($"  Optic Camera: {(opticCamera != 0 ? $"✓ Found @ 0x{opticCamera:X}" : "✗ NOT FOUND")}");
+            DebugLogger.LogDebug($"  Optic Camera: {(opticCamera != 0 ? $"✓ Found @ 0x{opticCamera:X}" : "✗ NOT FOUND")}\n");
 
             return (fpsCamera, opticCamera);
+        }
+
+        public static CameraDebugSnapshot GetDebugSnapshot()
+        {
+            return new CameraDebugSnapshot
+            {
+                IsADS = IsADS,
+                IsScoped = IsScoped,
+                FPSCamera = FPSCameraPtr,
+                OpticCamera = OpticCameraPtr,
+                ActiveCamera = ActiveCameraPtr,
+                Fov = _fov,
+                Aspect = _aspect,
+                M14 = _viewMatrix.M14,
+                M24 = _viewMatrix.M24,
+                M44 = _viewMatrix.M44,
+                RightX = _viewMatrix.Right.X,
+                RightY = _viewMatrix.Right.Y,
+                RightZ = _viewMatrix.Right.Z,
+                UpX = _viewMatrix.Up.X,
+                UpY = _viewMatrix.Up.Y,
+                UpZ = _viewMatrix.Up.Z,
+                TransX = _viewMatrix.Translation.X,
+                TransY = _viewMatrix.Translation.Y,
+                TransZ = _viewMatrix.Translation.Z,
+                CameraPosX = _cameraWorldPosition.X,
+                CameraPosY = _cameraWorldPosition.Y,
+                CameraPosZ = _cameraWorldPosition.Z,
+                ViewportW = Viewport.Width,
+                ViewportH = Viewport.Height
+            };
+        }
+
+        public readonly struct CameraDebugSnapshot
+        {
+            public bool IsADS { get; init; }
+            public bool IsScoped { get; init; }
+            public ulong FPSCamera { get; init; }
+            public ulong OpticCamera { get; init; }
+            public ulong ActiveCamera { get; init; }
+            public float Fov { get; init; }
+            public float Aspect { get; init; }
+            public float M14 { get; init; }
+            public float M24 { get; init; }
+            public float M44 { get; init; }
+            public float RightX { get; init; }
+            public float RightY { get; init; }
+            public float RightZ { get; init; }
+            public float UpX { get; init; }
+            public float UpY { get; init; }
+            public float UpZ { get; init; }
+            public float TransX { get; init; }
+            public float TransY { get; init; }
+            public float TransZ { get; init; }
+            public float CameraPosX { get; init; }
+            public float CameraPosY { get; init; }
+            public float CameraPosZ { get; init; }
+            public int ViewportW { get; init; }
+            public int ViewportH { get; init; }
+        }
+
+        public void OnRealtimeLoop(VmmScatter scatter, LocalPlayer localPlayer)
+        {
+            try
+            {
+                IsADS = localPlayer?.CheckIfADS() ?? false;
+                IsScoped = IsADS && CheckIfScoped(localPlayer);
+
+                if (IsADS != _lastADSState || IsScoped != _lastScopedState)
+                {
+                    DebugLogger.LogInfo($"CameraManager: State Changed - IsADS={IsADS}, IsScoped={IsScoped}, OpticCamera={(OpticCamera != 0 ? "Available" : "NOT FOUND")}");
+                    _lastADSState = IsADS;
+                    _lastScopedState = IsScoped;
+                }
+
+                ulong activeMatrixAddress = (IsADS && IsScoped) ? _opticMatrixAddress : _fpsMatrixAddress;
+                ulong activeCamera = (IsADS && IsScoped) ? OpticCamera : FPSCamera;
+                ActiveCameraPtr = activeCamera;
+
+                // Prepare reads for ViewMatrix and FOV/Aspect
+                scatter.PrepareReadValue<Matrix4x4>(activeMatrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset);
+                
+                if (IsScoped)
+                {
+                    scatter.PrepareReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_FOVOffset);
+                    scatter.PrepareReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset);
+                }
+                else
+                {
+                    scatter.PrepareReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_FOVOffset);
+                    scatter.PrepareReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset);
+                }
+                scatter.PrepareReadValue<float>(activeCamera + UnitySDK.UnityOffsets.Camera_ZoomLevelOffset);
+                
+                // Prepare Transform chain reads for camera position
+                // Camera → GameObject
+                var cameraGameObjectAddr = activeCamera + UnitySDK.UnityOffsets.Component_GameObjectOffset;
+                scatter.PrepareReadPtr(cameraGameObjectAddr);
+
+                scatter.Completed += (sender, s) =>
+                {
+                    try
+                    {
+                        if (s.ReadValue<Matrix4x4>(activeMatrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset, out var vm))
+                            _viewMatrix.Update(ref vm);
+
+                        // Try to read camera Transform position
+                        bool gotCameraPos = false;
+                        if (s.ReadPtr(cameraGameObjectAddr, out var gameObjectPtr) && gameObjectPtr != 0)
+                        {
+                            try
+                            {
+                                // Create a new scatter for Transform hierarchy reads (non-blocking)
+                                using var transformScatter = Memory.CreateScatter(VmmSharpEx.Options.VmmFlags.NOCACHE);
+                                
+                                // GameObject → Components → Transform
+                                var componentsAddr = gameObjectPtr + UnitySDK.UnityOffsets.GameObject_ComponentsOffset;
+                                transformScatter.PrepareReadPtr(componentsAddr);
+                                transformScatter.Execute();
+                                
+                                if (transformScatter.ReadPtr(componentsAddr, out var transformPtr) && transformPtr != 0)
+                                {
+                                    var transformDataAddr = transformPtr + 0x8;
+                                    transformScatter.PrepareReadPtr(transformDataAddr);
+                                    transformScatter.Execute();
+                                    
+                                    if (transformScatter.ReadPtr(transformDataAddr, out var transformDataPtr) && transformDataPtr != 0)
+                                    {
+                                        var transformInternalAddr = transformDataPtr + 0x10;
+                                        transformScatter.PrepareReadPtr(transformInternalAddr);
+                                        transformScatter.Execute();
+                                        
+                                        if (transformScatter.ReadPtr(transformInternalAddr, out var transformInternalPtr) && transformInternalPtr != 0)
+                                        {
+                                            // Read TransformAccess
+                                            var transformAccessAddr = transformInternalPtr + UnitySDK.UnityOffsets.TransformInternal_TransformAccessOffset;
+                                            transformScatter.PrepareReadValue<int>(transformAccessAddr + UnitySDK.UnityOffsets.TransformAccess_IndexOffset);
+                                            transformScatter.PrepareReadPtr(transformAccessAddr + UnitySDK.UnityOffsets.TransformAccess_HierarchyOffset);
+                                            transformScatter.Execute();
+                                            
+                                            if (transformScatter.ReadValue<int>(transformAccessAddr + UnitySDK.UnityOffsets.TransformAccess_IndexOffset, out var index) &&
+                                                transformScatter.ReadPtr(transformAccessAddr + UnitySDK.UnityOffsets.TransformAccess_HierarchyOffset, out var hierarchyPtr) &&
+                                                hierarchyPtr != 0 && index >= 0 && index < 10000)
+                                            {
+                                                // Read Hierarchy vertices address
+                                                var verticesAddrPtr = hierarchyPtr + UnitySDK.UnityOffsets.Hierarchy_VerticesOffset;
+                                                transformScatter.PrepareReadPtr(verticesAddrPtr);
+                                                transformScatter.Execute();
+                                                
+                                                if (transformScatter.ReadPtr(verticesAddrPtr, out var verticesAddr) && verticesAddr != 0)
+                                                {
+                                                    // Read the TrsX for this transform
+                                                    var vertexAddr = verticesAddr + (uint)(index * 0x30); // TrsX is 0x30 (48) bytes
+                                                    transformScatter.PrepareReadValue<UnityTransform.TrsX>(vertexAddr);
+                                                    transformScatter.Execute();
+                                                    
+                                                    if (transformScatter.ReadValue<UnityTransform.TrsX>(vertexAddr, out var trs))
+                                                    {
+                                                        _cameraWorldPosition = trs.t;
+                                                        gotCameraPos = true;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                DebugLogger.LogDebug($"ERROR reading camera Transform position: {ex}");
+                            }
+                        }
+                        
+                        // Fallback to ViewMatrix translation if Transform read fails
+                        if (!gotCameraPos)
+                        {
+                            _cameraWorldPosition = new Vector3(_viewMatrix.M14, _viewMatrix.M24, _viewMatrix.Translation.Z);
+                        }
+
+                        if (IsScoped)
+                        {
+                            if (s.ReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_FOVOffset, out var fov))
+                                _fov = fov;
+                            if (s.ReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset, out var aspect))
+                                _aspect = aspect;
+                            _updateCounter++;
+                            if (_updateCounter % 300 == 0)
+                                DebugLogger.LogDebug($"CameraManager: SCOPED (PiP) - Using OpticCamera, FOV={_fov:F2}, Aspect={_aspect:F3}, CamPos={_cameraWorldPosition}");
+                        }
+                        else
+                        {
+                            if (s.ReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_FOVOffset, out var fov))
+                                _fov = fov;
+                            if (s.ReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset, out var aspect))
+                                _aspect = aspect;
+                            _updateCounter++;
+                            if (_updateCounter % 300 == 0 && IsADS)
+                                DebugLogger.LogDebug($"CameraManager: ADS (non-scoped) - Using FPS Camera, CamPos={_cameraWorldPosition}");
+                        }
+
+                        if (s.ReadValue<float>(activeCamera + UnitySDK.UnityOffsets.Camera_ZoomLevelOffset, out var zoom))
+                            _zoomLevel = zoom;
+                    }
+                    catch (Exception ex)
+                    {
+                        DebugLogger.LogDebug($"ERROR in CameraManager scatter callback: {ex}");
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                DebugLogger.LogDebug($"ERROR in CameraManager OnRealtimeLoop: {ex}");
+            }
         }
 
         private bool CheckIfScoped(LocalPlayer localPlayer)
@@ -433,80 +651,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
             {
                 DebugLogger.LogDebug($"CheckIfScoped() ERROR: {ex}");
                 return false;
-            }
-        }
-
-        public void OnRealtimeLoop(VmmScatter scatter, LocalPlayer localPlayer)
-        {
-            try
-            {
-                IsADS = localPlayer?.CheckIfADS() ?? false;
-                IsScoped = IsADS && CheckIfScoped(localPlayer);
-
-                if (IsADS != _lastADSState || IsScoped != _lastScopedState)
-                {
-                    DebugLogger.LogInfo($"CameraManager: State Changed - IsADS={IsADS}, IsScoped={IsScoped}, OpticCamera={(OpticCamera != 0 ? "Available" : "NOT FOUND")}");
-                    _lastADSState = IsADS;
-                    _lastScopedState = IsScoped;
-                }
-
-                ulong activeMatrixAddress = (IsADS && IsScoped) ? _opticMatrixAddress : _fpsMatrixAddress;
-                ulong activeCamera = (IsADS && IsScoped) ? OpticCamera : FPSCamera;
-                ActiveCameraPtr = activeCamera;
-
-                scatter.PrepareReadValue<Matrix4x4>(activeMatrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset);
-                if (IsScoped)
-                {
-                    scatter.PrepareReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_FOVOffset);
-                    scatter.PrepareReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset);
-                }
-                else
-                {
-                    scatter.PrepareReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_FOVOffset);
-                    scatter.PrepareReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset);
-                }
-                scatter.PrepareReadValue<float>(activeCamera + UnitySDK.UnityOffsets.Camera_ZoomLevelOffset);
-
-                scatter.Completed += (sender, s) =>
-                {
-                    try
-                    {
-                        if (s.ReadValue<Matrix4x4>(activeMatrixAddress + UnitySDK.UnityOffsets.Camera_ViewMatrixOffset, out var vm))
-                            _viewMatrix.Update(ref vm);
-
-                        if (IsScoped)
-                        {
-                            if (s.ReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_FOVOffset, out var fov))
-                                _fov = fov;
-                            if (s.ReadValue<float>(OpticCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset, out var aspect))
-                                _aspect = aspect;
-                            _updateCounter++;
-                            if (_updateCounter % 300 == 0)
-                                DebugLogger.LogDebug($"CameraManager: SCOPED (PiP) - Using OpticCamera, FOV={_fov:F2}, Aspect={_aspect:F3}");
-                        }
-                        else
-                        {
-                            if (s.ReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_FOVOffset, out var fov))
-                                _fov = fov;
-                            if (s.ReadValue<float>(FPSCamera + UnitySDK.UnityOffsets.Camera_AspectRatioOffset, out var aspect))
-                                _aspect = aspect;
-                            _updateCounter++;
-                            if (_updateCounter % 300 == 0 && IsADS)
-                                DebugLogger.LogDebug("CameraManager: ADS (non-scoped) - Using FPS Camera");
-                        }
-
-                        if (s.ReadValue<float>(activeCamera + UnitySDK.UnityOffsets.Camera_ZoomLevelOffset, out var zoom))
-                            _zoomLevel = zoom;
-                    }
-                    catch (Exception ex)
-                    {
-                        DebugLogger.LogDebug($"ERROR in CameraManager scatter callback: {ex}");
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                DebugLogger.LogDebug($"ERROR in CameraManager OnRealtimeLoop: {ex}");
             }
         }
 
@@ -564,61 +708,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
         }
 
         #endregion
-
-
-
-        public static CameraDebugSnapshot GetDebugSnapshot()
-        {
-            return new CameraDebugSnapshot
-            {
-                IsADS = IsADS,
-                IsScoped = IsScoped,
-                FPSCamera = FPSCameraPtr,
-                OpticCamera = OpticCameraPtr,
-                ActiveCamera = ActiveCameraPtr,
-                Fov = _fov,
-                Aspect = _aspect,
-                M14 = _viewMatrix.M14,
-                M24 = _viewMatrix.M24,
-                M44 = _viewMatrix.M44,
-                RightX = _viewMatrix.Right.X,
-                RightY = _viewMatrix.Right.Y,
-                RightZ = _viewMatrix.Right.Z,
-                UpX = _viewMatrix.Up.X,
-                UpY = _viewMatrix.Up.Y,
-                UpZ = _viewMatrix.Up.Z,
-                TransX = _viewMatrix.Translation.X,
-                TransY = _viewMatrix.Translation.Y,
-                TransZ = _viewMatrix.Translation.Z,
-                ViewportW = Viewport.Width,
-                ViewportH = Viewport.Height
-            };
-        }
-
-        public readonly struct CameraDebugSnapshot
-        {
-            public bool IsADS { get; init; }
-            public bool IsScoped { get; init; }
-            public ulong FPSCamera { get; init; }
-            public ulong OpticCamera { get; init; }
-            public ulong ActiveCamera { get; init; }
-            public float Fov { get; init; }
-            public float Aspect { get; init; }
-            public float M14 { get; init; }
-            public float M24 { get; init; }
-            public float M44 { get; init; }
-            public float RightX { get; init; }
-            public float RightY { get; init; }
-            public float RightZ { get; init; }
-            public float UpX { get; init; }
-            public float UpY { get; init; }
-            public float UpZ { get; init; }
-            public float TransX { get; init; }
-            public float TransY { get; init; }
-            public float TransZ { get; init; }
-            public int ViewportW { get; init; }
-            public int ViewportH { get; init; }
-        }
 
         /// <summary>
         /// Returns the FOV Magnitude (Length) between a point, and the center of the screen.

@@ -500,6 +500,9 @@ namespace LoneEftDmaRadar.UI.ESP
                                      : $"{shortName} ({LoneEftDmaRadar.Misc.Utilities.FormatNumberKM(item.Price)})";
                              }
                          }
+                         
+                         // Add distance to all items
+                         text = $"{text} D:{distance:F0}m";
 
                          // Scale text size with distance
                          DxTextSize textSize;
@@ -615,7 +618,7 @@ namespace LoneEftDmaRadar.UI.ESP
                         continue;
 
                     if (!WorldToScreen2(grenade.Position, out var screen, screenWidth, screenHeight))
-                        continue;
+                        return;
 
                     // Calculate distance and scale like loot items
                     float distanceScale = Math.Clamp(25f / Math.Max(distance, 3f), 0.2f, 2.5f);

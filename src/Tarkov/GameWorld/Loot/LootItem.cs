@@ -31,6 +31,7 @@ using LoneEftDmaRadar.Misc;
 using LoneEftDmaRadar.Tarkov.GameWorld.Loot.Helpers;
 using LoneEftDmaRadar.Tarkov.GameWorld.Player;
 using LoneEftDmaRadar.Tarkov.Unity;
+using LoneEftDmaRadar.Tarkov.Unity.Structures;
 using LoneEftDmaRadar.UI.Loot;
 using LoneEftDmaRadar.UI.Radar.Maps;
 using LoneEftDmaRadar.UI.Skia;
@@ -43,6 +44,12 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
         private static EftDmaConfig Config { get; } = App.Config;
         private readonly TarkovMarketItem _item;
         private readonly bool _isQuestItem;
+
+        // Change from readonly field to mutable field so position can be updated
+        private Vector3 _position;
+        
+        // Store transform for position updates
+        protected UnityTransform _transform;
 
         public LootItem(TarkovMarketItem item, Vector3 position, bool isQuestItem = false)
         {
@@ -66,6 +73,37 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
             };
             _position = position;
             _isQuestItem = isQuestItem;
+        }
+
+        // Internal constructor for LootManager to set transform
+        internal LootItem(TarkovMarketItem item, Vector3 position, UnityTransform transform, bool isQuestItem = false)
+            : this(item, position, isQuestItem)
+        {
+            _transform = transform;
+        }
+
+        internal LootItem(string id, string name, Vector3 position, UnityTransform transform, bool isQuestItem = false)
+            : this(id, name, position, isQuestItem)
+        {
+            _transform = transform;
+        }
+
+        /// <summary>
+        /// Update the position from the transform if available.
+        /// </summary>
+        internal void UpdatePosition()
+        {
+            if (_transform != null)
+            {
+                try
+                {
+                    _position = _transform.UpdatePosition();
+                }
+                catch
+                {
+                    // Position update failed, keep old position
+                }
+            }
         }
 
         /// <summary>
@@ -196,7 +234,6 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
             return predicate(this);
         }
 
-        private readonly Vector3 _position; // Loot doesn't move, readonly ok
         public ref readonly Vector3 Position => ref _position;
         public Vector2 MouseoverPosition { get; set; }
 

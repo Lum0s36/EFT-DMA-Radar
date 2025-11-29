@@ -304,11 +304,13 @@ namespace LoneEftDmaRadar.UI.Skia
 
                     _canvas.DrawCircle(screen.X, screen.Y, r, paint);
 
-                    // name label scales with distance
+                    // name label scales with distance, add distance info
                     var shortName = string.IsNullOrWhiteSpace(item.ShortName) ? item.Name : item.ShortName;
+                    var label = $"{shortName} D:{distance:F0}m";
+                    
                     float fontSize = Math.Clamp(SKFonts.EspWidgetFont.Size * distanceScale * 0.8f, 7f, 20f);
                     using var font = new SKFont(SKFonts.EspWidgetFont.Typeface, fontSize) { Subpixel = true };
-                    _canvas.DrawText(shortName, new SKPoint(screen.X + r + 3, screen.Y + r + 1), SKTextAlign.Left, font, textPaint);
+                    _canvas.DrawText(label, new SKPoint(screen.X + r + 3, screen.Y + r + 1), SKTextAlign.Left, font, textPaint);
                 }
             }
         }

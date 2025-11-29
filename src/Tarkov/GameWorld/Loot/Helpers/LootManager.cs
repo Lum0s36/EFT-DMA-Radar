@@ -134,6 +134,13 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
                     _ = _loot.TryRemove(existing, out _);
                 }
             }
+            
+            // Update positions for existing items (in case they were moved/dropped)
+            foreach (var item in _loot.Values)
+            {
+                item.UpdatePosition();
+            }
+            
             // Proceed to get new loot
             using var map = Memory.CreateScatterMap();
             var round1 = map.AddRound();
@@ -234,8 +241,10 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
             }
             else
             {
-                // Get Item Position
-                var pos = new UnityTransform(p.TransformInternal, true).UpdatePosition();
+                // Get Item Position and Transform
+                var transform = new UnityTransform(p.TransformInternal, true);
+                var pos = transform.UpdatePosition();
+                
                 if (isCorpse)
                 {
                     var corpse = new LootCorpse(interactiveClass, pos);
@@ -276,14 +285,14 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
                         var shortNamePtr = Memory.ReadPtr(itemTemplate + Offsets.ItemTemplate.ShortName);
                         var shortName = Memory.ReadUnicodeString(shortNamePtr, 128);
                         DebugLogger.LogDebug(shortName);
-                        _ = _loot.TryAdd(p.ItemBase, new LootItem(id, $"Q_{shortName}", pos, isQuestItem: true));
+                        _ = _loot.TryAdd(p.ItemBase, new LootItem(id, $"Q_{shortName}", pos, transform, isQuestItem: true));
                     }
                     else
                     {
                         //If NOT a quest item. Quest items are like the quest related things you need to find like the pocket watch or Jaeger's Letter etc. We want to ignore these quest items.
                         if (TarkovDataManager.AllItems.TryGetValue(id, out var entry))
                         {
-                            _ = _loot.TryAdd(p.ItemBase, new LootItem(entry, pos));
+                            _ = _loot.TryAdd(p.ItemBase, new LootItem(entry, pos, transform));
                         }
                     }
                 }
