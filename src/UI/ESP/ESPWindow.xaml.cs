@@ -158,7 +158,7 @@ namespace LoneEftDmaRadar.UI.ESP
                 callback: HighFrequencyRenderCallback,
                 state: null,
                 dueTime: 0,
-                period: 1); // push frames as fast as dispatcher allows
+                period: 4); // 4ms = ~250 FPS max capability, actual FPS controlled by EspMaxFPS setting
         }
 
         private void InitializeRenderSurface()
@@ -189,29 +189,35 @@ namespace LoneEftDmaRadar.UI.ESP
         {
             try
             {
-                if (_isClosing)
+                if (_isClosing || _dxOverlay == null)
                     return;
 
                 int maxFPS = App.Config.UI.EspMaxFPS;
                 long currentTicks = System.Diagnostics.Stopwatch.GetTimestamp();
 
+                // FPS limiting: Skip frame if not enough time has elapsed
                 if (maxFPS > 0)
                 {
                     double elapsedMs = (currentTicks - _lastFrameTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
                     double targetMs = 1000.0 / maxFPS;
                     if (elapsedMs < targetMs)
-                        return;
+                        return; // Skip this frame to maintain FPS cap
                 }
 
                 _lastFrameTicks = currentTicks;
 
-                // Must dispatch to UI thread for rendering; avoid piling up work
+                // Render DirectX on dedicated timer thread (DirectX 9 is thread-safe)
+                // This removes WPF Dispatcher bottleneck - ESP no longer competes with Radar for UI thread
                 if (System.Threading.Interlocked.CompareExchange(ref _renderPending, 1, 0) == 0)
                 {
-                    Dispatcher.BeginInvoke(new Action(() =>
+                    try
                     {
-                        RefreshESP();
-                    }), System.Windows.Threading.DispatcherPriority.Send);
+                        _dxOverlay.Render(); // DirectX render happens on timer thread
+                    }
+                    finally
+                    {
+                        System.Threading.Interlocked.Exchange(ref _renderPending, 0);
+                    }
                 }
             }
             catch { /* Ignore errors during shutdown */ }
@@ -610,12 +616,12 @@ namespace LoneEftDmaRadar.UI.ESP
                 try
                 {
                     if (grenade.Position == Vector3.Zero)
-                        continue;
+                        return;
 
                     // Check distance - enforce 25m max
                     float distance = Vector3.Distance(localPlayer.Position, grenade.Position);
                     if (distance > maxRenderDistance)
-                        continue;
+                        return;
 
                     if (!WorldToScreen2(grenade.Position, out var screen, screenWidth, screenHeight))
                         return;
