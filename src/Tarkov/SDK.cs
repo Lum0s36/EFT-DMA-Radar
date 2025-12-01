@@ -57,13 +57,14 @@ namespace SDK
         {
             public const uint MovementContext = 0x60; // EFT.MovementContext
             public const uint _playerBody = 0x190; // EFT.PlayerBody
-            public const uint Physical = 0x8F0; // -.\uE399 <Physical> Physical
-            public const uint Corpse = 0x670; // EFT.Interactive.Corpse
+            public const uint ProceduralWeaponAnimation = 0x338; // EFT.Animations.ProceduralWeaponAnimation - UPDATED from 0x330
+            public const uint Corpse = 0x678; // EFT.Interactive.Corpse - UPDATED from 0x670
             public const uint Location = 0x868; // String - UPDATED from 0x860
-            public const uint Profile = 0x8D8; // EFT.Profile
-            public const uint ProceduralWeaponAnimation = 0x330; // EFT.Animations.ProceduralWeaponAnimation
-            public const uint _inventoryController = 0x950; // EFT.PlayerInventoryController update
-            public const uint _handsController = 0x958; // EFT.PlayerHands update
+            public const uint Profile = 0x8E0; // EFT.Profile - UPDATED from 0x8D8
+            public const uint Physical = 0x8F8; // Physical - UPDATED from 0x8F0
+            public const uint _inventoryController = 0x958; // EFT.PlayerInventoryController - UPDATED from 0x950
+            public const uint _handsController = 0x960; // EFT.PlayerHands - UPDATED from 0x958
+            public const uint _playerLookRaycastTransform = 0x9E8; // UnityEngine.Transform - ADDED
         }
 
         public readonly partial struct ObservedPlayerView
@@ -114,8 +115,8 @@ namespace SDK
 
         public readonly partial struct MovementContext
         {
-            public const uint Player = 0x48; // EFT.Player
-            public const uint _rotation = 0xC4; // UnityEngine.Vector2
+            public const uint Player = 0x48; // EFT.Player - NOTE: Dump shows 0x10 but this might be different inheritance
+            public const uint _rotation = 0xC8; // UnityEngine.Vector2 - UPDATED from 0xC4
             public const uint PlantState = 0x78; // EFT.BaseMovementState <PlantState> PlantState
             public const uint CurrentState = 0x1F0; // EFT.BaseMovementState <CurrentState>k__BackingField
             public const uint _states = 0x480; // System.Collections.Generic.Dictionary<Byte, BaseMovementState> <_states> _states
@@ -219,7 +220,7 @@ namespace SDK
             public const uint _template = 0x20; // EFT.InventoryLogic.ISightComponentTemplate
             public const uint ScopesSelectedModes = 0x30; // System.Int32[]
             public const uint SelectedScope = 0x38; // System.Int32
-            public const uint ScopeZoomValue = 0x3C; // System.Single
+            public const uint ScopeZoomValue = 0x3c; // System.Single - lowercase hex to match dump
         }
 
         public readonly partial struct SightInterface

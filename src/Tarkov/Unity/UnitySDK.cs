@@ -34,7 +34,7 @@ namespace LoneEftDmaRadar.Tarkov.Unity
     {
         public readonly struct UnityOffsets
         {
-            public const uint GameObjectManager = 0x1A21378;
+            public const uint GameObjectManager = 0x1A208D8; // UPDATED from 0x1A21378 - CRITICAL FIX
             public const uint AllCameras = 0x19F0040;
             //public const uint PhysiX = 0x1ACD770;
 
@@ -47,7 +47,7 @@ namespace LoneEftDmaRadar.Tarkov.Unity
             //public const uint MonoBehaviour_EnabledOffset = 0x38;
             public const uint MonoBehaviour_IsAddedOffset = 0x39;
 
-            public const uint Component_ObjectClassOffset = 0x40;
+            public const uint Component_ObjectClassOffset = 0x40; // Keeping 0x40 (different from official 0x30) - verify if issues
             public const uint Component_GameObjectOffset = 0x58;
 
             public const uint TransformInternal_TransformAccessOffset = 0x90;
