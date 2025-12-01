@@ -103,6 +103,11 @@ namespace LoneEftDmaRadar
                     App.Config.InfoWidget.Location = infoWidget.Rectangle;
                     App.Config.InfoWidget.Minimized = infoWidget.Minimized;
                 }
+                if (Radar?.ViewModel?.LootInfoWidget is LootInfoWidget lootInfoWidget)
+                {
+                    App.Config.LootInfoWidget.Location = lootInfoWidget.Rectangle;
+                    App.Config.LootInfoWidget.Minimized = lootInfoWidget.Minimized;
+                }
 
                 Memory.Dispose(); // Close FPGA
             }
@@ -149,6 +154,20 @@ namespace LoneEftDmaRadar
             {
                 if (!Radar?.IsVisible ?? false)
                     return; // Ignore if radar is not visible
+
+                // Check if any widget is focused - if so, don't zoom radar
+                bool anyWidgetFocused = 
+                    (Radar?.ViewModel?.AimviewWidget?.IsFocused ?? false) ||
+                    (Radar?.ViewModel?.InfoWidget?.IsFocused ?? false) ||
+                    (Radar?.ViewModel?.LootInfoWidget?.IsFocused ?? false);
+
+                if (anyWidgetFocused)
+                {
+                    // Widget is handling the scroll - don't zoom radar
+                    return;
+                }
+
+                // No widget focused - perform radar zoom
                 if (e.Delta > 0) // mouse wheel up (zoom in)
                 {
                     int amt = (int)((e.Delta / wheelDelta) * 5d); // Calculate zoom amount based on number of deltas

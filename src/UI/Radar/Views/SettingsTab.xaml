@@ -121,6 +121,10 @@ Toggle Fullscreen: F11
                                   ToolTip="Toggles the Player Info 'Widget' that gives you information about the players/bosses in your raid. Can be moved."
                                   IsChecked="{Binding PlayerInfoWidget, Mode=TwoWay}"
                                   Margin="0,0,16,8" />
+                        <CheckBox Content="Loot Info Widget"
+                                  ToolTip="Toggles the Loot Info 'Widget' that shows all loot items sorted by value in a table. Can be moved."
+                                  IsChecked="{Binding LootInfoWidget, Mode=TwoWay}"
+                                  Margin="0,0,16,8" />
                         <CheckBox Content="Connect Groups"
                                   ToolTip="Connects players that are grouped up via semi‑transparent green lines. Does not apply to your own party."
                                   IsChecked="{Binding ConnectGroups, Mode=TwoWay}"

@@ -133,6 +133,13 @@ namespace LoneEftDmaRadar
         public InfoWidgetConfig InfoWidget { get; private set; } = new();
 
         /// <summary>
+        /// Loot Info Widget Configuration.
+        /// </summary>
+        [JsonInclude]
+        [JsonPropertyName("lootInfoWidget")]
+        public LootInfoWidgetConfig LootInfoWidget { get; private set; } = new();
+
+        /// <summary>
         /// Settings for Device Aimbot (DeviceAimbot/KMBox).
         /// </summary>
         [JsonPropertyName("device")]
@@ -1116,6 +1123,28 @@ namespace LoneEftDmaRadar
 
         /// <summary>
         /// ESP Widget Location
+        /// </summary>
+        [JsonPropertyName("location")]
+        [JsonConverter(typeof(SKRectJsonConverter))]
+        public SKRect Location { get; set; }
+    }
+
+    public sealed class LootInfoWidgetConfig
+    {
+        /// <summary>
+        /// True if the Loot Info Widget is enabled.
+        /// </summary>
+        [JsonPropertyName("enabled")]
+        public bool Enabled { get; set; } = false;
+
+        /// <summary>
+        /// True if the Loot Info Widget is minimized.
+        /// </summary>
+        [JsonPropertyName("minimized")]
+        public bool Minimized { get; set; } = false;
+
+        /// <summary>
+        /// Loot Info Widget Location
         /// </summary>
         [JsonPropertyName("location")]
         [JsonConverter(typeof(SKRectJsonConverter))]

@@ -260,6 +260,19 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public bool LootInfoWidget
+        {
+            get => App.Config.LootInfoWidget.Enabled;
+            set
+            {
+                if (App.Config.LootInfoWidget.Enabled != value)
+                {
+                    App.Config.LootInfoWidget.Enabled = value;
+                    OnPropertyChanged(nameof(LootInfoWidget));
+                }
+            }
+        }
+
         public bool ConnectGroups
         {
             get => App.Config.UI.ConnectGroups;

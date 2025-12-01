@@ -162,6 +162,18 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
         private string _lastTabHeader;
         private int _appliedMaxFps;
 
+        // Ripple effect for pinged loot items
+        private readonly ConcurrentDictionary<string, PingEffect> _activePings = new();
+
+        private class PingEffect
+        {
+            public Vector2 Position { get; set; }
+            public float Radius { get; set; }
+            public float MaxRadius { get; set; }
+            public float Alpha { get; set; }
+            public Stopwatch Timer { get; } = Stopwatch.StartNew();
+        }
+
         /// <summary>
         /// Skia Radar Viewport.
         /// </summary>
@@ -174,6 +186,10 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
         /// Player Info Widget Viewport.
         /// </summary>
         public PlayerInfoWidget InfoWidget { get; private set; }
+        /// <summary>
+        /// Loot Info Widget Viewport.
+        /// </summary>
+        public LootInfoWidget LootInfoWidget { get; private set; }
 
         public RadarViewModel(RadarTab parent)
         {
@@ -212,10 +228,23 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                     App.Config.InfoWidget.Location = new SKRect(cr.Right - 1, cr.Top, cr.Right, cr.Top + 1);
                 }
 
+                if (App.Config.LootInfoWidget.Location == default)
+                {
+                    var size = Radar.CanvasSize;
+                    var cr = new SKRect(0, 0, size.Width, size.Height);
+                    App.Config.LootInfoWidget.Location = new SKRect(cr.Left, cr.Top, cr.Left + 300, cr.Top + 400);
+                }
+
                 AimviewWidget = new AimviewWidget(Radar, App.Config.AimviewWidget.Location, App.Config.AimviewWidget.Minimized,
                     App.Config.UI.UIScale);
                 InfoWidget = new PlayerInfoWidget(Radar, App.Config.InfoWidget.Location,
                     App.Config.InfoWidget.Minimized, App.Config.UI.UIScale);
+                LootInfoWidget = new LootInfoWidget(Radar, App.Config.LootInfoWidget.Location,
+                    App.Config.LootInfoWidget.Minimized, App.Config.UI.UIScale);
+                
+                // Subscribe to item click event for ping effect
+                LootInfoWidget.ItemClickedForPing += LootInfoWidget_ItemClickedForPing;
+                
                 Radar.PaintSurface += Radar_PaintSurface;
 
                 ConfigureRenderLoop();
@@ -442,6 +471,13 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                     {
                         AimviewWidget?.Draw(canvas);
                     }
+                    if (App.Config.LootInfoWidget.Enabled) // LootInfo Widget
+                    {
+                        LootInfoWidget?.Draw(canvas, Loot);
+                    }
+
+                    // Draw ripple effects for pinged loot items
+                    DrawPingEffects(canvas, mapParams);
                 }
                 else // LocalPlayer is *not* in a Raid -> Display Reason
                 {
@@ -769,6 +805,108 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
                     MouseoverGroup = null;
                 }
             }
+        }
+
+        private void LootInfoWidget_ItemClickedForPing(object sender, string itemName)
+        {
+            if (!InRaid || string.IsNullOrWhiteSpace(itemName) || EftMapManager.Map is null)
+                return;
+
+            // Search for ALL items matching the name
+            var lootItems = Loot;
+            if (lootItems is null)
+                return;
+
+            var map = EftMapManager.Map;
+            
+            // Find all items matching the name and create ping effects for each
+            foreach (var item in lootItems)
+            {
+                var name = string.IsNullOrWhiteSpace(item.ShortName) ? item.Name : item.ShortName;
+                if (string.Equals(name, itemName, StringComparison.Ordinal))
+                {
+                    // Convert world position to map position
+                    var mapPos = item.Position.ToMapPos(map.Config);
+                    
+                    // Create unique key for this specific item instance
+                    var key = $"{itemName}_{item.Position.X:F1}_{item.Position.Y:F1}_{item.Position.Z:F1}";
+                    
+                    // Create or update ping effect
+                    _activePings[key] = new PingEffect
+                    {
+                        Position = mapPos,
+                        Radius = 0f,
+                        MaxRadius = 50f * App.Config.UI.UIScale,
+                        Alpha = 1f
+                    };
+                }
+            }
+        }
+
+        private void DrawPingEffects(SKCanvas canvas, EftMapParams mapParams)
+        {
+            // Draw and update all active ping effects
+            var toRemove = new List<string>();
+            
+            foreach (var kvp in _activePings)
+            {
+                var ping = kvp.Value;
+                float elapsed = (float)ping.Timer.Elapsed.TotalSeconds;
+                
+                // Ping duration: 2 seconds
+                const float duration = 2f;
+                
+                if (elapsed >= duration)
+                {
+                    toRemove.Add(kvp.Key);
+                    continue;
+                }
+                
+                // Calculate progress (0 to 1)
+                float progress = elapsed / duration;
+                
+                // Expand radius
+                ping.Radius = ping.MaxRadius * progress;
+                
+                // Fade out alpha
+                ping.Alpha = 1f - progress;
+                
+                // Convert map position to zoomed screen position
+                var zoomedPos = ping.Position.ToZoomedPos(mapParams);
+                
+                // Draw ripple effect
+                var ripplePaint = new SKPaint
+                {
+                    Color = SKColors.Yellow.WithAlpha((byte)(ping.Alpha * 255)),
+                    StrokeWidth = 3f * App.Config.UI.UIScale,
+                    Style = SKPaintStyle.Stroke,
+                    IsAntialias = true
+                };
+                
+                canvas.DrawCircle(zoomedPos, ping.Radius, ripplePaint);
+                
+                // Optional: Draw second ripple slightly behind for more effect
+                if (progress > 0.3f)
+                {
+                    float secondProgress = (progress - 0.3f) / 0.7f;
+                    float secondRadius = ping.MaxRadius * secondProgress;
+                    float secondAlpha = (1f - secondProgress) * 0.6f;
+                    
+                    var secondPaint = new SKPaint
+                    {
+                        Color = SKColors.Yellow.WithAlpha((byte)(secondAlpha * 255)),
+                        StrokeWidth = 2f * App.Config.UI.UIScale,
+                        Style = SKPaintStyle.Stroke,
+                        IsAntialias = true
+                    };
+                    
+                    canvas.DrawCircle(zoomedPos, secondRadius, secondPaint);
+                }
+            }
+            
+            // Remove expired pings
+            foreach (var key in toRemove)
+                _activePings.TryRemove(key, out _);
         }
 
         #endregion
