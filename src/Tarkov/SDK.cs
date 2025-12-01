@@ -146,7 +146,7 @@ namespace SDK
 
         public readonly partial struct InteractiveLootItem
         {
-            public const uint Item = 0xF0; // EFT.InventoryLogic.Item
+            public const uint _item = 0xF0; // EFT.InventoryLogic.Item - RENAMED from Item to match official
         }
 
         public readonly partial struct DizSkinningSkeleton

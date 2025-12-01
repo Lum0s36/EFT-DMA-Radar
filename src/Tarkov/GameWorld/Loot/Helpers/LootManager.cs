@@ -274,7 +274,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
                 }
                 else if (isLooseLoot)
                 {
-                    var item = Memory.ReadPtr(interactiveClass + Offsets.InteractiveLootItem.Item); //EFT.InventoryLogic.Item
+                    var item = Memory.ReadPtr(interactiveClass + Offsets.InteractiveLootItem._item); //EFT.InventoryLogic.Item - UPDATED from Item
                     var itemTemplate = Memory.ReadPtr(item + Offsets.LootItem.Template); //EFT.InventoryLogic.ItemTemplate
                     var isQuestItem = Memory.ReadValue<bool>(itemTemplate + Offsets.ItemTemplate.QuestItem);
 
@@ -289,7 +289,7 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
                     }
                     else
                     {
-                        //If NOT a quest item. Quest items are like the quest related things you need to find like the pocket watch or Jaeger's Letter etc. We want to ignore these quest items.
+                        //If NOT a quest item. Quest items are like the quest related things you need to find like the pocket watch or Jaeger's Letter etc. We want to ignore这些任务物品。
                         if (TarkovDataManager.AllItems.TryGetValue(id, out var entry))
                         {
                             _ = _loot.TryAdd(p.ItemBase, new LootItem(entry, pos, transform));
