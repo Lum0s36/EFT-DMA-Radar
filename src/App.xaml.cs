@@ -74,7 +74,7 @@ namespace LoneEftDmaRadar
         /// Path to the Configuration Folder in %AppData%
         /// </summary>
         public static DirectoryInfo ConfigPath { get; } =
-            new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lone-EFT-DMA"));
+            new(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lum0s-EFT-DMA"));
         /// <summary>
         /// Global Program Configuration.
         /// </summary>
