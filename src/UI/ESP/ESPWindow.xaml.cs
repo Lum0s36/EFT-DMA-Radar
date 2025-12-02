@@ -1180,12 +1180,26 @@ namespace LoneEftDmaRadar.UI.ESP
                 // Reference: at some reference distance, 1 meter = X pixels
                 const float referencePixelsPerMeter = 50f; // Slightly larger than Aimview for full-screen ESP
                 scale = Math.Clamp(pixelDist / referencePixelsPerMeter, 0.2f, 8f);
+                
+                // Compensate for scope magnification to prevent over-zooming with scoped sights
+                float scopeMag = CameraManagerNew.ScopeMagnification;
+                if (scopeMag > 1.0f)
+                {
+                    scale /= scopeMag;
+                }
             }
             else
             {
                 // Fallback to depth-only scaling
                 const float referenceDepth = 10f;
                 scale = Math.Clamp(referenceDepth / Math.Max(viewDepth, 1f), 0.2f, 8f);
+                
+                // Apply scope magnification compensation
+                float scopeMag = CameraManagerNew.ScopeMagnification;
+                if (scopeMag > 1.0f)
+                {
+                    scale /= scopeMag;
+                }
             }
 
             return true;
@@ -1281,8 +1295,8 @@ namespace LoneEftDmaRadar.UI.ESP
             }
             catch (Exception ex)
             {
-                DebugLogger.LogDebug($"ESP Refresh error: {ex}");
-            }
+                DebugLogger.LogDebug($"ESP Refresh error: {ex}")
+;            }
             finally
             {
                 System.Threading.Interlocked.Exchange(ref _renderPending, 0);

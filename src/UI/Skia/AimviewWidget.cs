@@ -460,12 +460,28 @@ namespace LoneEftDmaRadar.UI.Skia
                 // This gives us the "magnification" relative to that reference
                 const float referencePixelsPerMeter = 30f; // Adjust this value for desired base size
                 scale = Math.Clamp(normalizedDist / referencePixelsPerMeter, 0.3f, 6f);
+                
+                // Compensate for scope magnification to prevent over-zooming with scoped sights
+                // When scoped (e.g., 4x), the FOV is already smaller, making everything appear bigger
+                // We need to divide by magnification to keep consistent visual size
+                float scopeMag = CameraManagerNew.ScopeMagnification;
+                if (scopeMag > 1.0f)
+                {
+                    scale /= scopeMag;
+                }
             }
             else
             {
                 // Fallback to depth-only scaling if offset projection fails
                 const float referenceDepth = 10f;
                 scale = Math.Clamp(referenceDepth / Math.Max(viewDepth, 1f), 0.3f, 6f);
+                
+                // Apply scope magnification compensation
+                float scopeMag = CameraManagerNew.ScopeMagnification;
+                if (scopeMag > 1.0f)
+                {
+                    scale /= scopeMag;
+                }
             }
 
             // Check if within widget bounds (allow some tolerance for edge cases)

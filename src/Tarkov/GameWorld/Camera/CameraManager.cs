@@ -405,12 +405,11 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Camera
                     if (cameraPtr == 0 || cameraPtr > 0x7FFFFFFFFFFF)
                         continue;
 
-                    // Camera+UnitySDK.UnityOffsets.GameObject_ComponentsOffset -> GameObject
-                    var gameObjectPtr = Memory.ReadPtr(cameraPtr + UnitySDK.UnityOffsets.GameObject_ComponentsOffset, false);
+                    // Camera (Component) -> GameObject
+                    var gameObjectPtr = Memory.ReadPtr(cameraPtr + UnitySDK.UnityOffsets.Component_GameObjectOffset, false);
                     if (gameObjectPtr == 0 || gameObjectPtr > 0x7FFFFFFFFFFF)
                         continue;
                     
-
                     var namePtr = Memory.ReadPtr(gameObjectPtr + UnitySDK.UnityOffsets.GameObject_NameOffset, false);
                     if (namePtr == 0 || namePtr > 0x7FFFFFFFFFFF)
                         continue;
