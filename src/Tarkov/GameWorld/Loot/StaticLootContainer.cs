@@ -84,10 +84,13 @@ namespace LoneEftDmaRadar.Tarkov.GameWorld.Loot
 
             try
             {
-                // Read the _openInteraction pointer at offset 0x1C0
-                // If pointer is not null (0), the container has been opened/searched
-                var openInteraction = Memory.ReadPtr(_interactiveClass + Offsets.LootableContainer._openInteraction);
-                Searched = openInteraction != 0;
+                // Check if someone is currently interacting with the container (opened/searching)
+                // This mirrors the old implementation: InteractingPlayer != 0
+                var interactingPlayer = Memory.ReadValue<ulong>(_interactiveClass + Offsets.LootableContainer.InteractingPlayer);
+                if (interactingPlayer != 0)
+                {
+                    Searched = true;
+                }
             }
             catch
             {
