@@ -441,6 +441,19 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public bool ShowCorpseMarkers
+        {
+            get => App.Config.Loot.ShowCorpseMarkers;
+            set
+            {
+                if (App.Config.Loot.ShowCorpseMarkers != value)
+                {
+                    App.Config.Loot.ShowCorpseMarkers = value;
+                    OnPropertyChanged(nameof(ShowCorpseMarkers));
+                }
+            }
+        }
+
         #endregion
 
         #region Aimview ESP

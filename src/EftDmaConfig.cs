@@ -950,6 +950,12 @@ namespace LoneEftDmaRadar
         public bool HideCorpses { get; set; }
 
         /// <summary>
+        /// Show corpse markers in Radar/Aimview (independent from ESP).
+        /// </summary>
+        [JsonPropertyName("showCorpseMarkers")]
+        public bool ShowCorpseMarkers { get; set; } = false;
+
+        /// <summary>
         /// Minimum loot value (rubles) to display 'normal loot' on map.
         /// </summary>
         [JsonPropertyName("minValue")]

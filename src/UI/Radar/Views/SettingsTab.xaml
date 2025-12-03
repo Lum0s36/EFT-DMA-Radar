@@ -168,6 +168,10 @@ Toggle Fullscreen: F11
                                   ToolTip="Shows static containers on the map/ESP."
                                   IsChecked="{Binding ShowStaticContainers, Mode=TwoWay}"
                                   Margin="0,0,16,8" />
+                        <CheckBox Content="Draw Corpse Markers"
+                                  ToolTip="Shows corpse markers on Radar and Aimview (independent from ESP)."
+                                  IsChecked="{Binding ShowCorpseMarkers, Mode=TwoWay}"
+                                  Margin="0,0,0,8" />
                     </WrapPanel>
 
                     <StackPanel Orientation="Horizontal"

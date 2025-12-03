@@ -85,7 +85,8 @@ namespace LoneEftDmaRadar.UI.Skia
 
                 DrawExfils(localPlayer);
                 DrawExplosives(localPlayer);
-                DrawStaticContainers(localPlayer); // ✅ Add container drawing
+                DrawStaticContainers(localPlayer);
+                DrawCorpseMarkers(localPlayer); // ✅ Add corpse marker drawing
                 DrawPlayersAndAIAsSkeletons(localPlayer);
                 DrawFilteredLoot(localPlayer);
                 DrawCrosshair();
@@ -272,6 +273,51 @@ namespace LoneEftDmaRadar.UI.Skia
             }
         }
 
+        private void DrawCorpseMarkers(LocalPlayer localPlayer)
+        {
+            // ✅ Controlled by Radar "Draw Corpse Markers" checkbox
+            if (!App.Config.Loot.ShowCorpseMarkers)
+                return;
+
+            var corpses = Memory.Game?.Loot?.AllLoot?.OfType<LootCorpse>();
+            if (corpses is null)
+                return;
+
+            const float maxRenderDistance = 100f; // Reasonable distance for corpse markers
+
+            foreach (var corpse in corpses)
+            {
+                float distance = Vector3.Distance(localPlayer.Position, corpse.Position);
+                if (distance > maxRenderDistance)
+                    continue;
+
+                if (TryProject(corpse.Position, out var screen, out float scale, localPlayer))
+                {
+                    // Scale radius with perspective (from TryProject)
+                    float r = Math.Clamp(3f * App.Config.UI.UIScale * scale, 2f, 15f);
+
+                    var paint = SKPaints.PaintCorpse;
+                    _canvas.DrawCircle(screen.X, screen.Y, r, paint);
+
+                    // Get corpse name (player name or "Corpse")
+                    var corpseName = corpse.Player?.Name;
+                    var displayName = string.IsNullOrWhiteSpace(corpseName) ? "Corpse" : corpseName;
+
+                    // Scale font with perspective
+                    float baseFontSize = SKFonts.EspWidgetFont.Size * scale * 0.9f;
+                    float fontSize = Math.Clamp(baseFontSize, 8f, 20f);
+                    using var font = new SKFont(SKFonts.EspWidgetFont.Typeface, fontSize) { Subpixel = true };
+                    var textPaint = new SKPaint
+                    {
+                        Color = SKPaints.PaintCorpse.Color,
+                        IsStroke = false,
+                        IsAntialias = true
+                    };
+                    _canvas.DrawText($"{displayName} D:{distance:F0}m", new SKPoint(screen.X + r + 3, screen.Y + r + 1), SKTextAlign.Left, font, textPaint);
+                }
+            }
+        }
+
         private void DrawPlayersAndAIAsSkeletons(LocalPlayer localPlayer)
         {
             if (!App.Config.AimviewWidget.ShowAI && !App.Config.AimviewWidget.ShowEnemyPlayers)
@@ -372,6 +418,10 @@ namespace LoneEftDmaRadar.UI.Skia
             {
                 // ✅ Skip containers - they're drawn separately in DrawStaticContainers()
                 if (item is StaticLootContainer)
+                    continue;
+
+                // ✅ Skip corpses - they're drawn separately in DrawCorpseMarkers()
+                if (item is LootCorpse)
                     continue;
 
                 if (item.IsQuestItem && !App.Config.AimviewWidget.ShowQuestItems)
