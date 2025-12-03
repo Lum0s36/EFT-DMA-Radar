@@ -100,10 +100,6 @@ namespace LoneEftDmaRadar
                 _mutex = new Mutex(true, MUTEX_ID, out bool singleton);
                 if (!singleton)
                     throw new InvalidOperationException("The application is already running.");
-                
-                // Handle Squirrel.Windows events (install/uninstall)
-                UpdateManager.HandleSquirrelEvents();
-                
                 Config = EftDmaConfig.Load();
                 ServiceProvider = BuildServiceProvider();
                 HttpClientFactory = ServiceProvider.GetRequiredService<IHttpClientFactory>();
@@ -129,13 +125,6 @@ namespace LoneEftDmaRadar
 
                 MainWindow = new MainWindow();
                 MainWindow.Show();
-                
-                // Check for updates after main window is shown (non-blocking)
-                _ = Task.Run(async () =>
-                {
-                    await Task.Delay(3000); // Wait 3 seconds before checking
-                    await UpdateManager.CheckForUpdatesAsync();
-                });
             }
             catch (Exception ex)
             {

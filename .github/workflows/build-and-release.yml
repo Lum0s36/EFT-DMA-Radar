@@ -22,7 +22,6 @@ jobs:
       PROJECT: src/Lone-EFT-DMA-Radar.csproj
       RUNTIME: win-x64
       APP_NAME: EFT-DMA-Radar
-      SQUIRREL_ID: github.lumos.eft
 
     steps:
       - name: Checkout
@@ -105,34 +104,12 @@ jobs:
             /p:InformationalVersion=${{ env.VERSION }}
         shell: pwsh
 
-      - name: Install Squirrel.Windows CLI
-        run: dotnet tool install --global Clowd.Squirrel
-        shell: pwsh
-
-      - name: Create Squirrel Release (Installer + NuGet Packages)
+      - name: Create release archive
         run: |
-          # Create releases directory
-          New-Item -ItemType Directory -Force -Path releases | Out-Null
-          
-          # Create Squirrel release with installer and NuGet packages
-          squirrel pack `
-            --packId "${{ env.SQUIRREL_ID }}" `
-            --packVersion "${{ env.VERSION_NUM }}" `
-            --packDirectory publish `
-            --releaseDir releases `
-            --icon "Resources\lone-icon.ico" `
-            --mainExe "Lone-EFT-DMA-Radar.exe"
-          
-          Write-Host "Created Squirrel packages in releases\ directory"
-          Get-ChildItem releases\
-        shell: pwsh
-
-      - name: Create portable ZIP
-        run: |
-          $zipName = "${{ env.APP_NAME }}-${{ env.VERSION }}-Portable.zip"
+          $zipName = "${{ env.APP_NAME }}_${{ env.VERSION }}.zip"
           if (Test-Path $zipName) { Remove-Item $zipName }
           Compress-Archive -Path publish\* -DestinationPath $zipName -Force
-          Write-Host "Created portable archive: $zipName"
+          Write-Host "Created archive: $zipName"
         shell: pwsh
 
       - name: Generate release notes
@@ -198,14 +175,10 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.APP_NAME }}-${{ env.VERSION }}-Portable.zip
-            releases/*.exe
-            releases/*.nupkg
+            ${{ env.APP_NAME }}_${{ env.VERSION }}.zip
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.VERSION }}
-          path: |
-            publish/
-            releases/
+          path: publish/
