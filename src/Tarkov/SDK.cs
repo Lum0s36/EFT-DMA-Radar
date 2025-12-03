@@ -158,6 +158,7 @@ namespace SDK
         {
             public const uint ItemOwner = 0x168; // -.\uEFB4
             public const uint _openInteraction = 0x1C0; // System.Object - indicates open interaction state
+            public const uint InteractingPlayer = 0x150; // System.Object <InteractingPlayer>k__BackingField - from WorldInteractiveObject base class
         }
 
         public readonly partial struct LootableContainerItemOwner
