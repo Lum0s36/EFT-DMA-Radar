@@ -19,10 +19,15 @@ This app has been tested on 🪟 Windows 11 25H2 (Game) and 🪟 Windows 11 23H2
 ## Features that are to be added in future commits ⌨️
 
 - Loot: Container distance slider 0= unlimited
-- Lootfilter and Wishlist items on AI (and PMC?) gear slots indicated by either "!!" or the exact name (short)
+- Lootfilter and Important/Wishlist items on AI (and PMC?) gear slots indicated by either "!!" or the exact name (short)
 - Exfils show if opened or closed
 - Quest tracker including zones, req. Keys and Items and only Q_items of active quests on radar/ESP/Aimview
 - ...?
+
+## Known Issues 🚨
+
+- Important/Wishlist Marker don't currently show on ESP.
+- ESP and Aimview Head Circles are not handled (and are not code-wise) part of the skeleton and don't scale like you'd expect them to.
 
 ## Features ✨
 
@@ -43,8 +48,6 @@ This Chair creates it's own Config folder to be distinguishable from other confi
 - Don't have a file with pre set Lootfilters and Watchlist? There's one in Master
 
 ##  Common Issues ⚠️
-
-### ESP and Aimview Head Circles are not handled (and are not code-wise) part of the skeleton and don't scale like you'd expect them to. Work in progress 🛠
 
 ### DX Overlay/D3DX Errors ("DX overlay init failed", "ESP DX init failed: System.DllNotFoundException: Unable to load DLL 'd3dx943.dll'...")
 
