@@ -209,6 +209,14 @@
             
             <GroupBox Header="Loot, Exfils &amp; Explosives" Margin="0,0,0,12">
                 <StackPanel>
+                     <!-- Show Wishlisted for ESP -->
+                     <WrapPanel Margin="0,0,0,8">
+                        <CheckBox Content="Show Wishlisted"
+                                  ToolTip="Show wishlist items with special marker in ESP (uses color from Loot Filters)"
+                                  IsChecked="{Binding EspShowWishlisted, Mode=TwoWay}"
+                                  Margin="0,0,0,0" />
+                     </WrapPanel>
+
                      <WrapPanel>
                         <CheckBox Content="Show Loot" IsChecked="{Binding EspLoot, Mode=TwoWay}" Margin="0,0,16,8" />
                         <CheckBox Content="Show Prices" IsChecked="{Binding EspLootPrice, Mode=TwoWay}" Margin="0,0,16,8" IsEnabled="{Binding EspLoot}" />

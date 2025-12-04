@@ -370,6 +370,19 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public bool EspShowWishlisted
+        {
+            get => App.Config.UI.EspShowWishlisted;
+            set
+            {
+                if (App.Config.UI.EspShowWishlisted != value)
+                {
+                    App.Config.UI.EspShowWishlisted = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public bool EspCorpses
         {
             get => App.Config.UI.EspCorpses;

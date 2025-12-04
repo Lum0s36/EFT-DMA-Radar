@@ -78,6 +78,36 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
 
         #endregion
 
+        #region Show Wishlisted
+
+        public bool ShowWishlistedRadar
+        {
+            get => App.Config.Loot.ShowWishlistedRadar;
+            set
+            {
+                if (App.Config.Loot.ShowWishlistedRadar != value)
+                {
+                    App.Config.Loot.ShowWishlistedRadar = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string WishlistColorRadar
+        {
+            get => App.Config.Loot.WishlistColorRadar;
+            set
+            {
+                if (App.Config.Loot.WishlistColorRadar != value)
+                {
+                    App.Config.Loot.WishlistColorRadar = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        #endregion
+
         #region Top Section - Filters
 
         private bool _currentFilterEnabled;

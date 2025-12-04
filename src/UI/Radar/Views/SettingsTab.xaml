@@ -7,6 +7,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:misc="clr-namespace:LoneEftDmaRadar.UI.Misc"
              xmlns:converters="clr-namespace:LoneEftDmaRadar.UI.Converters"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              mc:Ignorable="d"
              Padding="10">
 
@@ -19,6 +20,7 @@
         <misc:TwoPaneWidthConverter x:Key="TwoPaneWidthConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <converters:InverseBooleanConverter x:Key="InverseBoolConverter" />
+        <misc:StringToColorConverter x:Key="StringToColorConverter" />
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -286,6 +288,14 @@ Configure what entities are rendered in the Aimview widget.
                                   ToolTip="Draw head circles for players and AI in Aimview widget"
                                   IsChecked="{Binding AimviewShowHeadCircle, Mode=TwoWay}"
                                   Margin="0,0,0,8" />
+                    </WrapPanel>
+
+                    <!-- Show Wishlisted for Aimview -->
+                    <WrapPanel Margin="0,4,0,8">
+                        <CheckBox Content="Show Wishlisted"
+                                  ToolTip="Show wishlist items with special marker in Aimview (uses color from Loot Filters)"
+                                  IsChecked="{Binding AimviewShowWishlisted, Mode=TwoWay}"
+                                  Margin="0,0,0,0" />
                     </WrapPanel>
                     
                     <CheckBox Content="Item render distance max"

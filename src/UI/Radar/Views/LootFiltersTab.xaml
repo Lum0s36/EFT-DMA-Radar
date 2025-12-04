@@ -27,6 +27,8 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <!-- show wishlisted row -->
+            <RowDefinition Height="Auto" />
             <!-- filter selector -->
             <RowDefinition Height="Auto" />
             <!-- add‐entry row -->
@@ -34,10 +36,28 @@
             <!-- main grid -->
         </Grid.RowDefinitions>
 
-        <!-- Row 0: Filter selector -->
+        <!-- Row 0: Show Wishlisted checkbox with color picker -->
         <StackPanel Orientation="Horizontal"
                     Margin="5"
                     Grid.Row="0">
+            <CheckBox Content="Show Wishlisted"
+                      IsChecked="{Binding ShowWishlistedRadar, Mode=TwoWay}"
+                      VerticalAlignment="Center"
+                      ToolTip="Show all wishlist items on the Radar with a special marker"
+                      Margin="0,0,10,0" />
+            <TextBlock Text="Color:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,5,0" />
+            <xctk:ColorPicker SelectedColor="{Binding WishlistColorRadar, Mode=TwoWay, Converter={StaticResource StringToColorConverter}}"
+                              DisplayColorAndName="True"
+                              Width="120"
+                              IsEnabled="{Binding ShowWishlistedRadar}" />
+        </StackPanel>
+
+        <!-- Row 1: Filter selector -->
+        <StackPanel Orientation="Horizontal"
+                    Margin="5"
+                    Grid.Row="1">
             <CheckBox Content="Enabled"
                       IsChecked="{Binding CurrentFilterEnabled, Mode=TwoWay}"
                       VerticalAlignment="Center"
@@ -64,10 +84,10 @@
                               Width="150" />
         </StackPanel>
 
-        <!-- Row 1: Add new entry -->
+        <!-- Row 2: Add new entry -->
         <StackPanel Orientation="Horizontal"
                     Margin="5"
-                    Grid.Row="1">
+                    Grid.Row="2">
             <ComboBox x:Name="ItemSelector"
                       ItemsSource="{Binding FilteredItems, Mode=OneWay}"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -90,11 +110,11 @@
                     VerticalAlignment="Center" />
         </StackPanel>
 
-        <!-- Row 2: Entries grid with inline color‐picker -->
+        <!-- Row 3: Entries grid with inline color‐picker -->
         <DataGrid x:Name="EntriesGrid"
                   ItemsSource="{Binding Entries}"
                   AutoGenerateColumns="False"
-                  Grid.Row="2"
+                  Grid.Row="3"
                   Margin="5"
                   EnableRowVirtualization="True"
                   EnableColumnVirtualization="True"

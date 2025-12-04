@@ -725,6 +725,12 @@ namespace LoneEftDmaRadar
         public bool EspBackpacks { get; set; } = false;
 
         /// <summary>
+        /// Show wishlisted items on ESP.
+        /// </summary>
+        [JsonPropertyName("espShowWishlisted")]
+        public bool EspShowWishlisted { get; set; } = true;
+
+        /// <summary>
         /// Show Corpses on ESP.
         /// </summary>
         [JsonPropertyName("espCorpses")]
@@ -979,6 +985,17 @@ namespace LoneEftDmaRadar
         [JsonPropertyName("priceMode")]
         public LootPriceMode PriceMode { get; set; } = LootPriceMode.FleaMarket;
 
+        /// <summary>
+        /// Show wishlisted items on Radar.
+        /// </summary>
+        [JsonPropertyName("showWishlistedRadar")]
+        public bool ShowWishlistedRadar { get; set; } = true;
+
+        /// <summary>
+        /// Color for wishlisted items on Radar.
+        /// </summary>
+        [JsonPropertyName("wishlistColorRadar")]
+        public string WishlistColorRadar { get; set; } = "#FFFF0000";
     }
 
     public sealed class ContainersConfig
@@ -1157,6 +1174,12 @@ namespace LoneEftDmaRadar
         /// </summary>
         [JsonPropertyName("showHeadCircle")]
         public bool ShowHeadCircle { get; set; } = false;
+
+        /// <summary>
+        /// Show wishlisted items in Aimview.
+        /// </summary>
+        [JsonPropertyName("showWishlisted")]
+        public bool ShowWishlisted { get; set; } = true;
     }
 
     public sealed class InfoWidgetConfig

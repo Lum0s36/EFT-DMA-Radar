@@ -510,6 +510,19 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public bool AimviewShowWishlisted
+        {
+            get => App.Config.AimviewWidget.ShowWishlisted;
+            set
+            {
+                if (App.Config.AimviewWidget.ShowWishlisted != value)
+                {
+                    App.Config.AimviewWidget.ShowWishlisted = value;
+                    OnPropertyChanged(nameof(AimviewShowWishlisted));
+                }
+            }
+        }
+
         public float AimviewLootRenderDistance
         {
             get => App.Config.UI.AimviewLootRenderDistance;
