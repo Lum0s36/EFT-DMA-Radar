@@ -63,7 +63,7 @@ This means your PC does **not** have the required legacy DirectX 9 *D3DX* runtim
 1. **On your Radar PC**, download and run Microsoft’s official installer:
 
    👉 [DirectX End-User Runtime (June 2010)](https://www.microsoft.com/en-us/download/details.aspx?id=8109)
-   👉🏻 Installer instant download [dxwebsetup.exe](https://download.microsoft.com/download/1/7/1/1718CCC4-6315-4D8E-9543-8E28A4E18C4C/dxwebsetup.exe)
+   👉🏻 [Installer instant download dxwebsetup.exe](https://download.microsoft.com/download/1/7/1/1718CCC4-6315-4D8E-9543-8E28A4E18C4C/dxwebsetup.exe)
    > Installing either of these will add the required DirectX 9 component (`d3dx9_43.dll`) and several others needed by the overlay.
 
 2. **Follow the install prompts** to complete setup.
