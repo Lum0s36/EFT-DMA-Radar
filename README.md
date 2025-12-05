@@ -31,7 +31,6 @@ This app has been tested on 🪟 Windows 11 25H2 (Game) and 🪟 Windows 11 23H2
 
 ## Known Issues 🚨
 
-- Important/Wishlist Marker don't currently show on ESP.
 - ESP and Aimview Head Circles are not handled (and are not code-wise) part of the skeleton and don't scale like you'd expect them to.
 
 ## Features ✨
