@@ -23,9 +23,8 @@ This app has been tested on 🪟 Windows 11 25H2 (Game) and 🪟 Windows 11 23H2
 
 ## Features that are to be added in future commits ⌨️
 
-- Loot: Container distance slider 0= unlimited
 - Lootfilter and Important/Wishlist items on AI (and PMC?) gear slots indicated by either "!!" or the exact name (short)
-- Exfils show if opened or closed
+- Exfils show if opened, pending or closed
 - Quest tracker including zones, req. Keys and Items and only Q_items of active quests on radar/ESP/Aimview
 - ...?
 
