@@ -64,6 +64,11 @@ namespace LoneEftDmaRadar.UI.ESP
 
         private bool _isFullscreen;
 
+        // Notification system
+        private string _notificationMessage = string.Empty;
+        private System.Diagnostics.Stopwatch _notificationTimer = new();
+        private const int NOTIFICATION_DURATION_MS = 2000; // 2 seconds
+
         /// <summary>
         /// LocalPlayer (who is running Radar) 'Player' object.
         /// </summary>
@@ -287,12 +292,19 @@ namespace LoneEftDmaRadar.UI.ESP
                         ApplyResolutionOverrideIfNeeded();
 
                         // Render Loot (background layer)
-                        if (App.Config.Loot.Enabled && App.Config.UI.EspLoot)
+                        // ESP Loot is independent from Radar's "Show Loot" setting
+                        // Draw loot if any ESP loot category is enabled
+                        if (App.Config.UI.EspLoot || 
+                            App.Config.UI.EspFood || 
+                            App.Config.UI.EspMeds || 
+                            App.Config.UI.EspBackpacks || 
+                            App.Config.UI.EspQuestLoot || 
+                            App.Config.UI.EspCorpses)
                         {
                             DrawLoot(ctx, screenWidth, screenHeight, localPlayer);
                         }
 
-                        if (App.Config.Loot.Enabled && App.Config.UI.EspContainers)
+                        if (App.Config.UI.EspContainers)
                         {
                             DrawStaticContainers(ctx, screenWidth, screenHeight, localPlayer);
                         }
@@ -300,15 +312,10 @@ namespace LoneEftDmaRadar.UI.ESP
                         // Render Exfils - ALWAYS check if enabled
                         if (Exits is not null && App.Config.UI.EspExfils)
                         {
-                            const float exfilMaxDistance = 25f;
                             foreach (var exit in Exits)
                             {
                                 if (exit is Exfil exfil)
                                 {
-                                     float distance = Vector3.Distance(localPlayer.Position, exfil.Position);
-                                     if (distance > exfilMaxDistance)
-                                         continue;
-
                                      if (WorldToScreen2WithScale(exfil.Position, out var screen, out float scale, screenWidth, screenHeight))
                                      {
                                          var dotColor = ToColor(SKPaints.PaintExfilOpen);
@@ -358,6 +365,7 @@ namespace LoneEftDmaRadar.UI.ESP
 
                         DrawDeviceAimbotDebugOverlay(ctx, screenWidth, screenHeight);
                         DrawFPS(ctx, screenWidth, screenHeight);
+                        DrawNotification(ctx, screenWidth, screenHeight);
                     }
                 }
             }
@@ -369,7 +377,10 @@ namespace LoneEftDmaRadar.UI.ESP
 
         private void DrawLoot(Dx9RenderContext ctx, float screenWidth, float screenHeight, LocalPlayer localPlayer)
         {
-            var lootItems = Memory.Game?.Loot?.FilteredLoot;
+            // Use AllLoot instead of FilteredLoot to avoid Radar filter interference
+            // ESP will apply its own filters based on ESP settings
+            // AllLoot is independent of App.Config.Loot.Enabled - it contains all loot items from memory
+            var lootItems = Memory.Game?.Loot?.AllLoot;
             if (lootItems is null) return;
 
             var camPos = localPlayer?.Position ?? Vector3.Zero;
@@ -396,12 +407,39 @@ namespace LoneEftDmaRadar.UI.ESP
                 bool isMeds = item.IsMeds;
                 bool isBackpack = item.IsBackpack;
 
-                if (isFood && !App.Config.UI.EspFood)
-                    continue;
-                if (isMeds && !App.Config.UI.EspMeds)
-                    continue;
-                if (isBackpack && !App.Config.UI.EspBackpacks)
-                    continue;
+                // Check if item belongs to a specific category
+                // If it does, only show if that category is enabled
+                // If it doesn't, only show if EspLoot is enabled
+                if (isQuest)
+                {
+                    // Quest items are already handled above
+                }
+                else if (isCorpse)
+                {
+                    // Corpses are already handled above
+                }
+                else if (isFood)
+                {
+                    if (!App.Config.UI.EspFood)
+                        continue;
+                }
+                else if (isMeds)
+                {
+                    if (!App.Config.UI.EspMeds)
+                        continue;
+                }
+                else if (isBackpack)
+                {
+                    if (!App.Config.UI.EspBackpacks)
+                        continue;
+                }
+                else
+                {
+                    // Regular loot (not food, meds, backpack, quest, or corpse)
+                    // Only show if EspLoot is enabled
+                    if (!App.Config.UI.EspLoot)
+                        continue;
+                }
 
                 float distance = Vector3.Distance(camPos, item.Position);
                 if (!unlimitedDistance && distance > maxRenderDistance)
@@ -1057,6 +1095,76 @@ namespace LoneEftDmaRadar.UI.ESP
         {
             var fpsText = $"FPS: {_fps}";
             ctx.DrawText(fpsText, 10, 10, new DxColor(255, 255, 255, 255), DxTextSize.Small);
+        }
+
+        /// <summary>
+        /// Shows a notification message in the bottom-right corner of the ESP window.
+        /// </summary>
+        public void ShowNotification(string message)
+        {
+            if (_isClosing)
+                return;
+
+            _notificationMessage = message;
+            _notificationTimer.Restart();
+            RefreshESP();
+        }
+
+        /// <summary>
+        /// Draws the notification message in the bottom-right corner.
+        /// </summary>
+        private void DrawNotification(Dx9RenderContext ctx, float width, float height)
+        {
+            if (string.IsNullOrEmpty(_notificationMessage) || !_notificationTimer.IsRunning)
+                return;
+
+            long elapsedMs = _notificationTimer.ElapsedMilliseconds;
+            if (elapsedMs > NOTIFICATION_DURATION_MS)
+            {
+                _notificationMessage = string.Empty;
+                _notificationTimer.Stop();
+                return;
+            }
+
+            // Calculate fade-in/fade-out opacity
+            float opacity = 1.0f;
+            if (elapsedMs < 200) // Fade in over 200ms
+            {
+                opacity = elapsedMs / 200.0f;
+            }
+            else if (elapsedMs > NOTIFICATION_DURATION_MS - 300) // Fade out over last 300ms
+            {
+                float fadeOutStart = NOTIFICATION_DURATION_MS - 300;
+                opacity = 1.0f - ((elapsedMs - fadeOutStart) / 300.0f);
+            }
+
+            opacity = Math.Clamp(opacity, 0.0f, 1.0f);
+            byte alpha = (byte)(opacity * 255);
+
+            // Measure text to position it correctly
+            var textBounds = ctx.MeasureText(_notificationMessage, DxTextSize.Large);
+            int textWidth = Math.Max(1, textBounds.Right - textBounds.Left);
+            int textHeight = Math.Max(1, textBounds.Bottom - textBounds.Top);
+
+            // Position in bottom-right with padding
+            float padding = 20f;
+            float x = width - textWidth - padding;
+            float y = height - textHeight - padding;
+
+            // Draw background rectangle with semi-transparent black
+            float bgPadding = 14f;
+            float bgX = x - bgPadding;
+            float bgY = y - bgPadding;
+            float bgWidth = textWidth + bgPadding * 2;
+            float bgHeight = textHeight + bgPadding * 2;
+
+            // Draw background (semi-transparent black)
+            var bgColor = new DxColor(0, 0, 0, (byte)(alpha * 0.7f));
+            ctx.DrawFilledRect(new RectangleF(bgX, bgY, bgWidth, bgHeight), bgColor);
+
+            // Draw text
+            var textColor = new DxColor(255, 255, 255, alpha);
+            ctx.DrawText(_notificationMessage, x, y, textColor, DxTextSize.Large);
         }
 
         private static RawVector2 ToRaw(SKPoint point) => new(point.X, point.Y);
