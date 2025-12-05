@@ -169,15 +169,18 @@ namespace LoneEftDmaRadar.DMA
             catch (Exception ex)
             {
                 throw new InvalidOperationException(
-                "DMA Initialization Failed!\n" +
-                $"Reason: {ex.Message}\n" +
-                $"{versions}\n\n" +
-                "===TROUBLESHOOTING===\n" +
-                "1. Reboot both your Game PC / Radar PC (This USUALLY fixes it).\n" +
-                "2. Reseat all cables/connections and make sure they are secure.\n" +
-                "3. Changed Hardware/Operating System on Game PC? Reset your DMA Config ('Options' menu in Client) and try again.\n" +
-                "4. Make sure all Setup Steps are completed (See DMA Setup Guide/FAQ for additional troubleshooting).\n\n" +
-                "PLEASE REVIEW THE ABOVE BEFORE CONTACTING SUPPORT!");
+                    "DMA Initialization Failed!\n" +
+                    $"Reason: {ex.Message}\n" +
+                    $"{versions}\n\n" +
+                    "===TROUBLESHOOTING===\n" +
+                    "1. Reboot both your Game PC / Radar PC (This USUALLY fixes it).\n" +
+                    "2. Reseat all cables/connections and make sure they are secure.\n" +
+                    "3. Changed Hardware/Operating System on Game PC? Reset your DMA Config ('Options' menu in Client) and try again.\n" +
+                    "4. Make sure all Setup Steps are completed (See DMA Setup Guide/FAQ for additional troubleshooting).\n" +
+                    "5. Please ensure that no other programs are using DMA.\n\n" +
+                    "PLEASE REVIEW THE ABOVE BEFORE CONTACTING SUPPORT!\n" +
+                     "==================\n"
+                );
             }
         }
 

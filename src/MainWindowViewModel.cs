@@ -118,6 +118,8 @@ namespace LoneEftDmaRadar
             toggleESPLoot.HotkeyStateChanged += ToggleESPLoot_HotkeyStateChanged;
             var toggleESPExfils = new HotkeyActionController("Toggle ESP Exfils");
             toggleESPExfils.HotkeyStateChanged += ToggleESPExfils_HotkeyStateChanged;
+            var toggleESPContainers = new HotkeyActionController("Toggle ESP Containers");
+            toggleESPContainers.HotkeyStateChanged += ToggleESPContainers_HotkeyStateChanged;
             var toggleStaticContainers = new HotkeyActionController("Toggle Static Containers");
             toggleStaticContainers.HotkeyStateChanged += ToggleStaticContainers_HotkeyStateChanged;
             var toggleESPTripwires = new HotkeyActionController("Toggle ESP Tripwires");
@@ -166,6 +168,7 @@ namespace LoneEftDmaRadar
             HotkeyAction.RegisterController(toggleESPScavs);
             HotkeyAction.RegisterController(toggleESPLoot);
             HotkeyAction.RegisterController(toggleESPExfils);
+            HotkeyAction.RegisterController(toggleESPContainers);
             HotkeyAction.RegisterController(toggleStaticContainers);
             HotkeyAction.RegisterController(toggleESPTripwires);
             HotkeyAction.RegisterController(toggleESPGrenades);
@@ -319,6 +322,15 @@ namespace LoneEftDmaRadar
             {
                 App.Config.UI.EspExfils = !App.Config.UI.EspExfils;
                 ESPManager.ShowNotification($"ESP Exfils: {(App.Config.UI.EspExfils ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPContainers_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspContainers = !App.Config.UI.EspContainers;
+                ESPManager.ShowNotification($"ESP Containers: {(App.Config.UI.EspContainers ? "ON" : "OFF")}");
             }
         }
 

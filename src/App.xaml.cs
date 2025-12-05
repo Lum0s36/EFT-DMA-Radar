@@ -153,7 +153,15 @@ namespace LoneEftDmaRadar
         /// </summary>
         private async Task ConfigureProgramAsync(LoadingWindow loadingWindow)
         {
-            await loadingWindow.ViewModel.UpdateProgressAsync(15, "Loading, Please Wait...");
+            await loadingWindow.ViewModel.UpdateProgressAsync(5, "Initializing...", "Preparing application environment");
+            await Task.Delay(100);
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(10, "Loading Configuration", "Reading settings and preferences");
+            await Task.Delay(100);
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(15, "Initializing Modules", "Starting core components");
+            
+            // Start all modules in parallel
             var tarkovDataManager = TarkovDataManager.ModuleInitAsync();
             var eftMapManager = EftMapManager.ModuleInitAsync();
             var memoryInterface = MemoryInterface.ModuleInitAsync();
@@ -168,8 +176,34 @@ namespace LoneEftDmaRadar
                 RuntimeHelpers.RunClassConstructor(typeof(LocalCache).TypeHandle);
                 RuntimeHelpers.RunClassConstructor(typeof(ColorPickerViewModel).TypeHandle);
             });
+
+            // Update progress while modules are loading
+            await loadingWindow.ViewModel.UpdateProgressAsync(20, "Loading Game Data", "Loading items, containers, and map data from TarkovDataManager");
+            await Task.Delay(100);
+            
+            await loadingWindow.ViewModel.UpdateProgressAsync(30, "Loading Maps", "Initializing map configurations and resources");
+            await Task.Delay(100);
+            
+            await loadingWindow.ViewModel.UpdateProgressAsync(40, "Initializing DMA", "Connecting to DMA device and memory interface");
+            await Task.Delay(100);
+            
+            await loadingWindow.ViewModel.UpdateProgressAsync(50, "Initializing UI", "Setting up UI components, themes, and color picker");
+            await Task.Delay(100);
+
+            // Wait for all tasks to complete
             await Task.WhenAll(tarkovDataManager, eftMapManager, memoryInterface, misc);
-            await loadingWindow.ViewModel.UpdateProgressAsync(100, "Loading Completed!");
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(70, "Modules Loaded", "All core modules initialized successfully");
+            await Task.Delay(150);
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(85, "Finalizing", "Completing initialization and preparing services");
+            await Task.Delay(100);
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(95, "Almost Ready", "Preparing main window and user interface");
+            await Task.Delay(100);
+
+            await loadingWindow.ViewModel.UpdateProgressAsync(100, "Loading Completed!", "Application ready - Welcome to EFT DMA Radar");
+            
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
