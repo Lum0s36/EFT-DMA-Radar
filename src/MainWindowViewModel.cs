@@ -120,6 +120,36 @@ namespace LoneEftDmaRadar
             toggleESPExfils.HotkeyStateChanged += ToggleESPExfils_HotkeyStateChanged;
             var toggleStaticContainers = new HotkeyActionController("Toggle Static Containers");
             toggleStaticContainers.HotkeyStateChanged += ToggleStaticContainers_HotkeyStateChanged;
+            var toggleESPTripwires = new HotkeyActionController("Toggle ESP Tripwires");
+            toggleESPTripwires.HotkeyStateChanged += ToggleESPTripwires_HotkeyStateChanged;
+            var toggleESPGrenades = new HotkeyActionController("Toggle ESP Grenades");
+            toggleESPGrenades.HotkeyStateChanged += ToggleESPGrenades_HotkeyStateChanged;
+            var toggleESPCrosshair = new HotkeyActionController("Toggle ESP Crosshair");
+            toggleESPCrosshair.HotkeyStateChanged += ToggleESPCrosshair_HotkeyStateChanged;
+            var toggleESPQuestLoot = new HotkeyActionController("Toggle ESP Quest Loot");
+            toggleESPQuestLoot.HotkeyStateChanged += ToggleESPQuestLoot_HotkeyStateChanged;
+            var toggleESPFood = new HotkeyActionController("Toggle ESP Food");
+            toggleESPFood.HotkeyStateChanged += ToggleESPFood_HotkeyStateChanged;
+            var toggleESPMeds = new HotkeyActionController("Toggle ESP Meds");
+            toggleESPMeds.HotkeyStateChanged += ToggleESPMeds_HotkeyStateChanged;
+            var toggleESPBackpacks = new HotkeyActionController("Toggle ESP Backpacks");
+            toggleESPBackpacks.HotkeyStateChanged += ToggleESPBackpacks_HotkeyStateChanged;
+            var toggleESPCorpses = new HotkeyActionController("Toggle ESP Corpses");
+            toggleESPCorpses.HotkeyStateChanged += ToggleESPCorpses_HotkeyStateChanged;
+            var toggleESPPlayerHealth = new HotkeyActionController("Toggle ESP Player Health");
+            toggleESPPlayerHealth.HotkeyStateChanged += ToggleESPPlayerHealth_HotkeyStateChanged;
+            var toggleESPAIHealth = new HotkeyActionController("Toggle ESP AI Health");
+            toggleESPAIHealth.HotkeyStateChanged += ToggleESPAIHealth_HotkeyStateChanged;
+            var toggleESPGroupIds = new HotkeyActionController("Toggle ESP Group IDs");
+            toggleESPGroupIds.HotkeyStateChanged += ToggleESPGroupIds_HotkeyStateChanged;
+            var toggleESPAIGroupIds = new HotkeyActionController("Toggle ESP AI Group IDs");
+            toggleESPAIGroupIds.HotkeyStateChanged += ToggleESPAIGroupIds_HotkeyStateChanged;
+            var toggleESPHeadCirclePlayers = new HotkeyActionController("Toggle ESP Head Circle Players");
+            toggleESPHeadCirclePlayers.HotkeyStateChanged += ToggleESPHeadCirclePlayers_HotkeyStateChanged;
+            var toggleESPHeadCircleAI = new HotkeyActionController("Toggle ESP Head Circle AI");
+            toggleESPHeadCircleAI.HotkeyStateChanged += ToggleESPHeadCircleAI_HotkeyStateChanged;
+            var espResetCamera = new HotkeyActionController("ESP Reset Camera");
+            espResetCamera.HotkeyStateChanged += ESPResetCamera_HotkeyStateChanged;
 
             // Add to Static Collection:
             HotkeyAction.RegisterController(zoomIn);
@@ -137,6 +167,21 @@ namespace LoneEftDmaRadar
             HotkeyAction.RegisterController(toggleESPLoot);
             HotkeyAction.RegisterController(toggleESPExfils);
             HotkeyAction.RegisterController(toggleStaticContainers);
+            HotkeyAction.RegisterController(toggleESPTripwires);
+            HotkeyAction.RegisterController(toggleESPGrenades);
+            HotkeyAction.RegisterController(toggleESPCrosshair);
+            HotkeyAction.RegisterController(toggleESPQuestLoot);
+            HotkeyAction.RegisterController(toggleESPFood);
+            HotkeyAction.RegisterController(toggleESPMeds);
+            HotkeyAction.RegisterController(toggleESPBackpacks);
+            HotkeyAction.RegisterController(toggleESPCorpses);
+            HotkeyAction.RegisterController(toggleESPPlayerHealth);
+            HotkeyAction.RegisterController(toggleESPAIHealth);
+            HotkeyAction.RegisterController(toggleESPGroupIds);
+            HotkeyAction.RegisterController(toggleESPAIGroupIds);
+            HotkeyAction.RegisterController(toggleESPHeadCirclePlayers);
+            HotkeyAction.RegisterController(toggleESPHeadCircleAI);
+            HotkeyAction.RegisterController(espResetCamera);
             HotkeyAction.RegisterController(engageAimbotDeviceAimbot);
             HotkeyAction.RegisterController(toggleDeviceAimbotEnabled);
             HotkeyManagerViewModel.NotifyControllersRegistered();
@@ -229,6 +274,7 @@ namespace LoneEftDmaRadar
             if (e.State)
             {
                 ESPManager.ToggleESP();
+                ESPManager.ShowNotification($"ESP Overlay: {(ESPWindow.ShowESP ? "ON" : "OFF")}");
             }
         }
 
@@ -241,6 +287,7 @@ namespace LoneEftDmaRadar
                 App.Config.UI.EspPlayerBoxes = newState;
                 App.Config.UI.EspPlayerNames = newState;
                 App.Config.UI.EspPlayerDistance = newState;
+                ESPManager.ShowNotification($"ESP Players: {(newState ? "ON" : "OFF")}");
             }
         }
 
@@ -253,6 +300,7 @@ namespace LoneEftDmaRadar
                 App.Config.UI.EspAIBoxes = newState;
                 App.Config.UI.EspAINames = newState;
                 App.Config.UI.EspAIDistance = newState;
+                ESPManager.ShowNotification($"ESP Scavs/AI: {(newState ? "ON" : "OFF")}");
             }
         }
 
@@ -261,6 +309,7 @@ namespace LoneEftDmaRadar
             if (e.State)
             {
                 App.Config.UI.EspLoot = !App.Config.UI.EspLoot;
+                ESPManager.ShowNotification($"ESP Loot: {(App.Config.UI.EspLoot ? "ON" : "OFF")}");
             }
         }
 
@@ -269,6 +318,7 @@ namespace LoneEftDmaRadar
             if (e.State)
             {
                 App.Config.UI.EspExfils = !App.Config.UI.EspExfils;
+                ESPManager.ShowNotification($"ESP Exfils: {(App.Config.UI.EspExfils ? "ON" : "OFF")}");
             }
         }
 
@@ -277,6 +327,141 @@ namespace LoneEftDmaRadar
             if (e.State && _parent.Settings?.ViewModel is SettingsViewModel vm)
             {
                 vm.ShowStaticContainers = !vm.ShowStaticContainers;
+            }
+        }
+
+        private void ToggleESPTripwires_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspTripwires = !App.Config.UI.EspTripwires;
+                ESPManager.ShowNotification($"ESP Tripwires: {(App.Config.UI.EspTripwires ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPGrenades_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspGrenades = !App.Config.UI.EspGrenades;
+                ESPManager.ShowNotification($"ESP Grenades: {(App.Config.UI.EspGrenades ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPCrosshair_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspCrosshair = !App.Config.UI.EspCrosshair;
+                ESPManager.ShowNotification($"ESP Crosshair: {(App.Config.UI.EspCrosshair ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPQuestLoot_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspQuestLoot = !App.Config.UI.EspQuestLoot;
+                ESPManager.ShowNotification($"ESP Quest Loot: {(App.Config.UI.EspQuestLoot ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPFood_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspFood = !App.Config.UI.EspFood;
+                ESPManager.ShowNotification($"ESP Food: {(App.Config.UI.EspFood ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPMeds_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspMeds = !App.Config.UI.EspMeds;
+                ESPManager.ShowNotification($"ESP Meds: {(App.Config.UI.EspMeds ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPBackpacks_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspBackpacks = !App.Config.UI.EspBackpacks;
+                ESPManager.ShowNotification($"ESP Backpacks: {(App.Config.UI.EspBackpacks ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPCorpses_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspCorpses = !App.Config.UI.EspCorpses;
+                ESPManager.ShowNotification($"ESP Corpses: {(App.Config.UI.EspCorpses ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPPlayerHealth_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspPlayerHealth = !App.Config.UI.EspPlayerHealth;
+                ESPManager.ShowNotification($"ESP Player Health: {(App.Config.UI.EspPlayerHealth ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPAIHealth_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspAIHealth = !App.Config.UI.EspAIHealth;
+                ESPManager.ShowNotification($"ESP AI Health: {(App.Config.UI.EspAIHealth ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPGroupIds_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspGroupIds = !App.Config.UI.EspGroupIds;
+                ESPManager.ShowNotification($"ESP Group IDs: {(App.Config.UI.EspGroupIds ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPAIGroupIds_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspAIGroupIds = !App.Config.UI.EspAIGroupIds;
+                ESPManager.ShowNotification($"ESP AI Group IDs: {(App.Config.UI.EspAIGroupIds ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPHeadCirclePlayers_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspHeadCirclePlayers = !App.Config.UI.EspHeadCirclePlayers;
+                ESPManager.ShowNotification($"ESP Head Circle Players: {(App.Config.UI.EspHeadCirclePlayers ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPHeadCircleAI_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspHeadCircleAI = !App.Config.UI.EspHeadCircleAI;
+                ESPManager.ShowNotification($"ESP Head Circle AI: {(App.Config.UI.EspHeadCircleAI ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ESPResetCamera_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                ESPManager.ResetCamera();
+                ESPManager.ShowNotification("ESP Camera Reset");
             }
         }
 

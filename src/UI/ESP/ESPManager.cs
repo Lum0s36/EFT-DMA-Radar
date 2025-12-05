@@ -125,6 +125,17 @@ namespace LoneEftDmaRadar.UI.ESP
             _espWindow?.RefreshESP();
         }
 
+        /// <summary>
+        /// Shows a notification message in the ESP window (bottom-right corner).
+        /// </summary>
+        public static void ShowNotification(string message)
+        {
+            if (!_isInitialized || _espWindow is null)
+                return;
+
+            _espWindow.ShowNotification(message);
+        }
+
         public static bool IsInitialized => _isInitialized;
     }
 }

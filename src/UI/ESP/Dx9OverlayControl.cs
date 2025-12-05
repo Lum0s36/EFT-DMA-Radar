@@ -369,6 +369,20 @@ namespace LoneEftDmaRadar.UI.ESP
             _line.End();
         }
 
+        public void DrawFilledRect(RectangleF rect, DxColor color)
+        {
+            var verts = new ColoredVertex[4]
+            {
+                new ColoredVertex(rect.Left, rect.Top, color),
+                new ColoredVertex(rect.Right, rect.Top, color),
+                new ColoredVertex(rect.Left, rect.Bottom, color),
+                new ColoredVertex(rect.Right, rect.Bottom, color)
+            };
+
+            _device.VertexFormat = ColoredVertex.Format;
+            _device.DrawUserPrimitives(PrimitiveType.TriangleStrip, 2, verts);
+        }
+
         public void DrawCircle(RawVector2 center, float radius, DxColor color, bool filled)
         {
             if (radius <= 0.5f)
