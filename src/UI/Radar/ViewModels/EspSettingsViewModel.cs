@@ -772,6 +772,19 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public bool EspNearestPlayerInfo
+        {
+            get => App.Config.UI.EspNearestPlayerInfo;
+            set
+            {
+                if (App.Config.UI.EspNearestPlayerInfo != value)
+                {
+                    App.Config.UI.EspNearestPlayerInfo = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -8,6 +8,7 @@ using LoneEftDmaRadar.Tarkov.GameWorld.Player.Helpers;
 using LoneEftDmaRadar.Tarkov.Unity.Structures;
 using System.Drawing;
 using System.Linq;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -368,6 +369,7 @@ namespace LoneEftDmaRadar.UI.ESP
                         DrawDeviceAimbotDebugOverlay(ctx, screenWidth, screenHeight);
                         DrawFPS(ctx, screenWidth, screenHeight);
                         DrawNotification(ctx, screenWidth, screenHeight);
+                        DrawNearestPlayerInfo(ctx, screenWidth, screenHeight, localPlayer, allPlayers);
                     }
                 }
             }
@@ -1092,6 +1094,138 @@ namespace LoneEftDmaRadar.UI.ESP
         {
             var fpsText = $"FPS: {_fps}";
             ctx.DrawText(fpsText, 10, 10, new DxColor(255, 255, 255, 255), DxTextSize.Small);
+        }
+
+        /// <summary>
+        /// Finds the nearest player (excluding teammates), prioritizing PMC as highest priority.
+        /// </summary>
+        private AbstractPlayer FindNearestPlayer(LocalPlayer localPlayer, IReadOnlyCollection<AbstractPlayer> allPlayers)
+        {
+            if (localPlayer == null || allPlayers == null)
+                return null;
+
+            AbstractPlayer nearestPMC = null;
+            AbstractPlayer nearestOtherPlayer = null;
+            AbstractPlayer nearestAI = null;
+            float nearestPMCDistance = float.MaxValue;
+            float nearestOtherPlayerDistance = float.MaxValue;
+            float nearestAIDistance = float.MaxValue;
+
+            foreach (var player in allPlayers)
+            {
+                // Skip invalid players
+                if (player == null || player == localPlayer || !player.IsAlive || !player.IsActive)
+                    continue;
+
+                // Skip teammates
+                if (player.Type == PlayerType.Teammate)
+                    continue;
+
+                // Skip players with invalid positions
+                var playerPos = player.Position;
+                if (playerPos == Vector3.Zero ||
+                    float.IsNaN(playerPos.X) || float.IsNaN(playerPos.Y) || float.IsNaN(playerPos.Z) ||
+                    float.IsInfinity(playerPos.X) || float.IsInfinity(playerPos.Y) || float.IsInfinity(playerPos.Z))
+                    continue;
+
+                float distance = Vector3.Distance(localPlayer.Position, player.Position);
+
+                // Priority 1: PMC (highest priority)
+                if (player.Type == PlayerType.PMC && distance < nearestPMCDistance)
+                {
+                    nearestPMC = player;
+                    nearestPMCDistance = distance;
+                }
+                // Priority 2: Other human players (PScav, SpecialPlayer, Streamer)
+                else if (player.IsHuman && (player.Type == PlayerType.PScav || 
+                                            player.Type == PlayerType.SpecialPlayer || 
+                                            player.Type == PlayerType.Streamer) && 
+                         distance < nearestOtherPlayerDistance)
+                {
+                    nearestOtherPlayer = player;
+                    nearestOtherPlayerDistance = distance;
+                }
+                // Priority 3: AI
+                else if (player.IsAI && distance < nearestAIDistance)
+                {
+                    nearestAI = player;
+                    nearestAIDistance = distance;
+                }
+            }
+
+            // Return PMC first, then other players, then AI
+            return nearestPMC ?? nearestOtherPlayer ?? nearestAI;
+        }
+
+        /// <summary>
+        /// Draws nearest player information in the center-bottom of the ESP window.
+        /// </summary>
+        private void DrawNearestPlayerInfo(Dx9RenderContext ctx, float width, float height, LocalPlayer localPlayer, IReadOnlyCollection<AbstractPlayer> allPlayers)
+        {
+            // Check if feature is enabled
+            if (!App.Config.UI.EspNearestPlayerInfo)
+                return;
+
+            var nearestPlayer = FindNearestPlayer(localPlayer, allPlayers);
+            if (nearestPlayer == null)
+                return;
+
+            float distance = Vector3.Distance(localPlayer.Position, nearestPlayer.Position);
+
+            // Build single line text
+            var parts = new List<string>();
+            
+            // Name
+            string name = nearestPlayer.Name ?? "Unknown";
+            parts.Add(name);
+
+            // Distance
+            parts.Add($"{distance:F1}m");
+
+            // Type
+            string typeText = nearestPlayer.Type switch
+            {
+                PlayerType.PMC => "PMC",
+                PlayerType.PScav => "PScav",
+                PlayerType.AIScav => "Scav",
+                PlayerType.AIRaider => "Raider",
+                PlayerType.AIBoss => "Boss",
+                PlayerType.SpecialPlayer => "Special",
+                PlayerType.Streamer => "Streamer",
+                _ => nearestPlayer.Type.ToString()
+            };
+            parts.Add(typeText);
+
+            // Health status (if available)
+            if (nearestPlayer is ObservedPlayer observed && observed.HealthStatus != Enums.ETagStatus.Healthy)
+            {
+                parts.Add(observed.HealthStatus.ToString());
+            }
+
+            // Faction (if PMC)
+            if (nearestPlayer.IsPmc)
+            {
+                parts.Add(nearestPlayer.PlayerSide.ToString());
+            }
+
+            // Group ID (if available)
+            if (nearestPlayer.GroupID >= 0 && nearestPlayer.IsPmc && !nearestPlayer.IsAI)
+            {
+                parts.Add($"G{nearestPlayer.GroupID}");
+            }
+
+            // Combine all parts into single line
+            string text = string.Join(" | ", parts);
+
+            // Position in center-bottom (higher up to be more visible)
+            float padding = 150f; // Increased from 20f to make it more visible
+            float textY = height - padding;
+
+            // Get player color for text (matches team/faction color)
+            var textColor = GetPlayerColorForRender(nearestPlayer);
+
+            // Draw text (centered horizontally)
+            ctx.DrawText(text, width / 2f, textY, textColor, DxTextSize.Large, centerX: true);
         }
 
         /// <summary>

@@ -62,7 +62,7 @@
                                          ToolTip="Use any installed font family name (e.g. Segoe UI, Arial, Consolas)"/>
                             </WrapPanel>
                             <WrapPanel Margin="0,4,0,0">
-                                <TextBlock Text="Sizes (S/M/L):" VerticalAlignment="Center" Width="90"/>
+                                <TextBlock Text="Sizes (Small/Medium/Large):" VerticalAlignment="Center" Width="90"/>
                                 <TextBox Width="50"
                                          Text="{Binding EspFontSizeSmall, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          ToolTip="Small text size (loot labels)"/>
@@ -348,6 +348,10 @@
                     <CheckBox Content="Crosshair"
                                   ToolTip="Displays a simple crosshair at the center of the ESP window."
                                   IsChecked="{Binding EspCrosshair, Mode=TwoWay}"
+                                  Margin="0,0,16,8" />
+                    <CheckBox Content="Nearest Player Info"
+                                  ToolTip="Show nearest player information in center-bottom of ESP window."
+                                  IsChecked="{Binding EspNearestPlayerInfo, Mode=TwoWay}"
                                   Margin="0,0,16,8" />
 
                     <WrapPanel Margin="0,4,0,0" IsEnabled="{Binding EspCrosshair}">

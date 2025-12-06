@@ -743,6 +743,12 @@ namespace LoneEftDmaRadar
         public bool EspContainers { get; set; } = false;
 
         /// <summary>
+        /// Show nearest player info in center-bottom of ESP window.
+        /// </summary>
+        [JsonPropertyName("espNearestPlayerInfo")]
+        public bool EspNearestPlayerInfo { get; set; } = true;
+
+        /// <summary>
         /// Show a crosshair overlay on ESP window.
         /// </summary>
         [JsonPropertyName("espCrosshair")]

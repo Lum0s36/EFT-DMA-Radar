@@ -150,6 +150,8 @@ namespace LoneEftDmaRadar
             toggleESPHeadCirclePlayers.HotkeyStateChanged += ToggleESPHeadCirclePlayers_HotkeyStateChanged;
             var toggleESPHeadCircleAI = new HotkeyActionController("Toggle ESP Head Circle AI");
             toggleESPHeadCircleAI.HotkeyStateChanged += ToggleESPHeadCircleAI_HotkeyStateChanged;
+            var toggleESPNearestPlayerInfo = new HotkeyActionController("Toggle ESP Nearest Player Info");
+            toggleESPNearestPlayerInfo.HotkeyStateChanged += ToggleESPNearestPlayerInfo_HotkeyStateChanged;
             var espResetCamera = new HotkeyActionController("ESP Reset Camera");
             espResetCamera.HotkeyStateChanged += ESPResetCamera_HotkeyStateChanged;
 
@@ -184,6 +186,7 @@ namespace LoneEftDmaRadar
             HotkeyAction.RegisterController(toggleESPAIGroupIds);
             HotkeyAction.RegisterController(toggleESPHeadCirclePlayers);
             HotkeyAction.RegisterController(toggleESPHeadCircleAI);
+            HotkeyAction.RegisterController(toggleESPNearestPlayerInfo);
             HotkeyAction.RegisterController(espResetCamera);
             HotkeyAction.RegisterController(engageAimbotDeviceAimbot);
             HotkeyAction.RegisterController(toggleDeviceAimbotEnabled);
@@ -465,6 +468,15 @@ namespace LoneEftDmaRadar
             {
                 App.Config.UI.EspHeadCircleAI = !App.Config.UI.EspHeadCircleAI;
                 ESPManager.ShowNotification($"ESP Head Circle AI: {(App.Config.UI.EspHeadCircleAI ? "ON" : "OFF")}");
+            }
+        }
+
+        private void ToggleESPNearestPlayerInfo_HotkeyStateChanged(object sender, HotkeyEventArgs e)
+        {
+            if (e.State)
+            {
+                App.Config.UI.EspNearestPlayerInfo = !App.Config.UI.EspNearestPlayerInfo;
+                ESPManager.ShowNotification($"ESP Nearest Player Info: {(App.Config.UI.EspNearestPlayerInfo ? "ON" : "OFF")}");
             }
         }
 
