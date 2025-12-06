@@ -22,6 +22,7 @@
     <UserControl.Resources>
         <misc:StringToBrushConverter x:Key="StringToBrushConverter" />
         <misc:StringToColorConverter x:Key="StringToColorConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
     <Grid>
@@ -87,27 +88,13 @@
         <!-- Row 2: Add new entry -->
         <StackPanel Orientation="Horizontal"
                     Margin="5"
-                    Grid.Row="2">
-            <ComboBox x:Name="ItemSelector"
-                      ItemsSource="{Binding FilteredItems, Mode=OneWay}"
-                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                      SelectedItem="{Binding SelectedItemToAdd, Mode=TwoWay}"
-                      DisplayMemberPath="Name"
-                      Width="400"
-                      Margin="0,0,10,0">
-                <ComboBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ComboBox.ItemsPanel>
-            </ComboBox>
-            <TextBox Text="{Binding ItemSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                     Width="200"
-                     Margin="0,0,10,0"
-                     VerticalAlignment="Center" />
-            <Button Content="Add"
-                    Command="{Binding AddEntryCommand}"
-                    VerticalAlignment="Center" />
+                    Grid.Row="2"
+                    Visibility="{Binding CurrentFilterEnabled, Converter={StaticResource BoolToVis}}">
+            <Button Content="Add Item..."
+                    Command="{Binding OpenItemSelectorCommand}"
+                    Width="150"
+                    VerticalAlignment="Center"
+                    ToolTip="Open item selector dialog with search - selected item will be added automatically"/>
         </StackPanel>
 
         <!-- Row 3: Entries grid with inline color‐picker -->
@@ -121,7 +108,8 @@
                   ScrollViewer.CanContentScroll="True"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
-                  KeyDown="EntriesGrid_KeyDown">
+                  KeyDown="EntriesGrid_KeyDown"
+                  Visibility="{Binding CurrentFilterEnabled, Converter={StaticResource BoolToVis}}">
 
             <DataGrid.ContextMenu>
                 <ContextMenu>

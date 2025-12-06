@@ -28,6 +28,7 @@ SOFTWARE.
 
 using LoneEftDmaRadar.UI.Radar.ViewModels;
 using System.Windows.Controls;
+using System.Windows;
 
 namespace LoneEftDmaRadar.UI.Radar.Views
 {
@@ -41,6 +42,36 @@ namespace LoneEftDmaRadar.UI.Radar.Views
         {
             InitializeComponent();
             DataContext = ViewModel = new SettingsViewModel(this);
+        }
+
+        private void BtnLootFilters_Checked(object sender, RoutedEventArgs e)
+        {
+            // When Loot Filters is checked, uncheck Static Containers
+            if (BtnStaticContainers.IsChecked == true)
+            {
+                BtnStaticContainers.IsChecked = false;
+            }
+        }
+
+        private void BtnLootFilters_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Optional: If both are unchecked, you might want to keep one checked
+            // For now, allow both to be unchecked
+        }
+
+        private void BtnStaticContainers_Checked(object sender, RoutedEventArgs e)
+        {
+            // When Static Containers is checked, uncheck Loot Filters
+            if (BtnLootFilters.IsChecked == true)
+            {
+                BtnLootFilters.IsChecked = false;
+            }
+        }
+
+        private void BtnStaticContainers_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Optional: If both are unchecked, you might want to keep one checked
+            // For now, allow both to be unchecked
         }
     }
 }

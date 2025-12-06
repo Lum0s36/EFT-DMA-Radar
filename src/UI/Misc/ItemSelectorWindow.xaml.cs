@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Lone EFT DMA Radar
  * Brought to you by Lone (Lone DMA)
  * 
@@ -26,42 +26,39 @@ SOFTWARE.
  *
 */
 
-using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Media;
+using System.Windows;
+using System.Windows.Input;
 
 namespace LoneEftDmaRadar.UI.Misc
 {
     /// <summary>
-    /// Converts a hex/color‐name string ↔ System.Windows.Media.Color.
+    /// Interaction logic for ItemSelectorWindow.xaml
     /// </summary>
-    public class StringToColorConverter : IValueConverter
+    public sealed partial class ItemSelectorWindow : Window
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public ItemSelectorViewModel ViewModel { get; }
+        public object SelectedItem => ViewModel.SelectedItem;
+
+        public ItemSelectorWindow(ItemSelectorViewModel viewModel)
         {
-            if (value is string s && !string.IsNullOrWhiteSpace(s))
+            InitializeComponent();
+            DataContext = ViewModel = viewModel;
+
+            ViewModel.CloseRequested += (s, e) =>
             {
-                try
-                {
-                    return (Color)ColorConverter.ConvertFromString(s);
-                }
-                catch { }
-            }
-            return Colors.Transparent;
+                DialogResult = e.DialogResult;
+                Close();
+            };
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        private void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (value is Color c)
+            if (ViewModel.SelectedItem != null)
             {
-                // If alpha is 0, set it to 255 (fully opaque)
-                if (c.A == 0)
-                {
-                    c = Color.FromArgb(255, c.R, c.G, c.B);
-                }
-                return c.ToString();  // e.g. "#FFAABBCC"
+                DialogResult = true;
+                Close();
             }
-            return string.Empty;
         }
     }
 }
+

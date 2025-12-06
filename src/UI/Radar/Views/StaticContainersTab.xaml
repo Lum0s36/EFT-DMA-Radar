@@ -12,48 +12,62 @@
                           IsDesignTimeCreatable="False" />
     </d:UserControl.DataContext>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Orientation="Vertical"
-                    Margin="0,0,0,10">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <GroupBox Header="Static Containers"
-                      Margin="0,0,0,12">
-                <StackPanel>
-                    <WrapPanel Margin="0,0,0,8">
-                        <CheckBox Content="Select All"
-                                  ToolTip="Selects all container types for display."
-                                  IsChecked="{Binding StaticContainersSelectAll, Mode=TwoWay}"
-                                  Margin="0,0,16,8" />
-                        <CheckBox Content="Hide Searched"
-                                  ToolTip="Hides containers that have been searched by local player."
-                                  IsChecked="{Binding HideSearchedContainers, Mode=TwoWay}"
-                                  Margin="0,0,16,8" />
-                    </WrapPanel>
+        <GroupBox Header="Static Containers"
+                  Grid.Row="0"
+                  Margin="0,0,0,12">
+            <StackPanel>
+                <WrapPanel Margin="0,0,0,8">
+                    <CheckBox Content="Select All"
+                              ToolTip="Selects all container types for display."
+                              IsChecked="{Binding StaticContainersSelectAll, Mode=TwoWay}"
+                              Margin="0,0,16,8" />
+                    <CheckBox Content="Hide Searched"
+                              ToolTip="Hides containers that have been searched by local player."
+                              IsChecked="{Binding HideSearchedContainers, Mode=TwoWay}"
+                              Margin="0,0,16,8" />
+                </WrapPanel>
 
-                    <TextBlock Text="Tracked Containers"
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Search:"
                                VerticalAlignment="Center"
-                               Margin="0,0,4,8" />
-
-                    <ListBox ItemsSource="{Binding StaticContainers}"
-                             Height="300"
-                             ScrollViewer.CanContentScroll="True">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel IsVirtualizing="True"
-                                                        VirtualizationMode="Recycling" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding Name}"
-                                          IsChecked="{Binding IsTracked, Mode=TwoWay}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                               Margin="0,0,8,0" />
+                    <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Width="300"
+                             VerticalAlignment="Center"
+                             ToolTip="Search containers by name or ID" />
                 </StackPanel>
-            </GroupBox>
+            </StackPanel>
+        </GroupBox>
 
-        </StackPanel>
-    </ScrollViewer>
+        <GroupBox Header="Tracked Containers"
+                  Grid.Row="1">
+            <ListBox ItemsSource="{Binding StaticContainers}"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.CanContentScroll="False"
+                     MaxHeight="250"
+                     BorderThickness="0">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel IsVirtualizing="True"
+                                                VirtualizationMode="Recycling" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Name}"
+                                  IsChecked="{Binding IsTracked, Mode=TwoWay}"
+                                  Margin="2" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
+    </Grid>
 </UserControl>

@@ -209,59 +209,19 @@ Toggle Fullscreen: F11
 
                     <!-- Header buttons (static size, side by side) -->
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,6">
-                        <ToggleButton x:Name="BtnLootFilters" Content="Loot Filters" MinWidth="140" Height="28" Margin="0,0,8,0" IsChecked="False" />
-                        <ToggleButton x:Name="BtnStaticContainers" Content="Static Containers" MinWidth="160" Height="28" IsChecked="False" />
+                        <ToggleButton x:Name="BtnLootFilters" Content="Loot Filters" MinWidth="140" Height="28" Margin="0,0,8,0" IsChecked="False" Checked="BtnLootFilters_Checked" Unchecked="BtnLootFilters_Unchecked" />
+                        <ToggleButton x:Name="BtnStaticContainers" Content="Static Containers" MinWidth="160" Height="28" IsChecked="False" Checked="BtnStaticContainers_Checked" Unchecked="BtnStaticContainers_Unchecked" />
                     </StackPanel>
 
                     <!-- Loot management panels -->
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition>
-                                <ColumnDefinition.Width>
-                                    <MultiBinding Converter="{StaticResource TwoPaneWidthConverter}" ConverterParameter="left">
-                                        <Binding ElementName="BtnLootFilters" Path="IsChecked" />
-                                        <Binding ElementName="BtnStaticContainers" Path="IsChecked" />
-                                    </MultiBinding>
-                                </ColumnDefinition.Width>
-                            </ColumnDefinition>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition>
-                                <ColumnDefinition.Width>
-                                    <MultiBinding Converter="{StaticResource TwoPaneWidthConverter}" ConverterParameter="right">
-                                        <Binding ElementName="BtnLootFilters" Path="IsChecked" />
-                                        <Binding ElementName="BtnStaticContainers" Path="IsChecked" />
-                                    </MultiBinding>
-                                </ColumnDefinition.Width>
-                            </ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-
                         <!-- Loot Filters panel -->
-                        <Border Grid.Column="0" Margin="0,0,4,0"
-                                Visibility="{Binding ElementName=BtnLootFilters, Path=IsChecked, Converter={StaticResource BoolToVis}}">
+                        <Border Visibility="{Binding ElementName=BtnLootFilters, Path=IsChecked, Converter={StaticResource BoolToVis}}">
                             <local:LootFiltersTab />
                         </Border>
 
-                        <!-- Splitter: visible only when both toggles are on -->
-                        <GridSplitter x:Name="LootSplitterSettings" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext" Background="#404040">
-                            <GridSplitter.Style>
-                                <Style TargetType="GridSplitter">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsChecked, ElementName=BtnLootFilters}" Value="True" />
-                                                <Condition Binding="{Binding IsChecked, ElementName=BtnStaticContainers}" Value="True" />
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </MultiDataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </GridSplitter.Style>
-                        </GridSplitter>
-
                         <!-- Static Containers panel -->
-                        <Border Grid.Column="2" Margin="4,0,0,0"
-                                Visibility="{Binding ElementName=BtnStaticContainers, Path=IsChecked, Converter={StaticResource BoolToVis}}">
+                        <Border Visibility="{Binding ElementName=BtnStaticContainers, Path=IsChecked, Converter={StaticResource BoolToVis}}">
                             <local:StaticContainersTab />
                         </Border>
                     </Grid>

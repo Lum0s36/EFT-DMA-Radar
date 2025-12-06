@@ -31,6 +31,7 @@ using LoneEftDmaRadar.UI.Loot;
 using LoneEftDmaRadar.UI.Misc;
 using LoneEftDmaRadar.UI.Radar.Views;
 using LoneEftDmaRadar.Web.TarkovDev.Data;
+using LoneEftDmaRadar;
 using System.Collections.ObjectModel;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -60,6 +61,7 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             AddEntryCommand = new SimpleCommand(OnAddEntry);
             RemoveEntryCommand = new SimpleCommand(OnRemoveEntry);
             DeleteEntryCommand = new SimpleCommand(OnDeleteEntry);
+            OpenItemSelectorCommand = new SimpleCommand(OnOpenItemSelector);
 
             if (FilterNames.Any())
                 SelectedFilterName = App.Config.LootFilters.Selected;
@@ -330,6 +332,30 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             }
         }
 
+        public ICommand OpenItemSelectorCommand { get; }
+        private void OnOpenItemSelector()
+        {
+            var viewModel = new ItemSelectorViewModel(AvailableItems);
+            var window = new ItemSelectorWindow(viewModel)
+            {
+                Owner = MainWindow.Instance
+            };
+
+            if (window.ShowDialog() == true && viewModel.SelectedItem != null)
+            {
+                // Add item directly to filter
+                var userFilter = App.Config.LootFilters.Filters[SelectedFilterName];
+                var entry = new LootFilterEntry
+                {
+                    ItemID = viewModel.SelectedItem.BsgId,
+                    ParentFilter = userFilter,
+                    ExplicitColor = CurrentFilterColor // Use filter color
+                };
+
+                Entries.Add(entry);
+            }
+        }
+
         public ICommand AddEntryCommand { get; }
         private void OnAddEntry()
         {
@@ -339,7 +365,8 @@ namespace LoneEftDmaRadar.UI.Radar.ViewModels
             var entry = new LootFilterEntry
             {
                 ItemID = SelectedItemToAdd.BsgId,
-                ParentFilter = userFilter
+                ParentFilter = userFilter,
+                ExplicitColor = CurrentFilterColor // Use filter color
             };
 
             Entries.Add(entry);
